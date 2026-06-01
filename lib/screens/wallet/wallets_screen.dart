@@ -44,12 +44,11 @@ class WalletsScreen extends StatelessWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddWalletSheet(context),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Dompet'),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }
@@ -312,12 +311,13 @@ class _AddWalletSheetState extends State<_AddWalletSheet> {
     super.initState();
     if (isEdit) {
       _nameController.text = widget.walletToEdit!.name;
-      
-      final intBalance = double.tryParse(widget.walletToEdit!.balance)?.toInt() ?? 0;
-      _balanceController.text = intBalance == 0 
-          ? '' 
+
+      final intBalance =
+          double.tryParse(widget.walletToEdit!.balance)?.toInt() ?? 0;
+      _balanceController.text = intBalance == 0
+          ? ''
           : NumberFormat.decimalPattern('id_ID').format(intBalance);
-          
+
       _selectedType = widget.walletToEdit!.type;
     }
   }

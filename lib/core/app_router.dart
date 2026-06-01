@@ -46,7 +46,7 @@ class AppRouter {
       case wallets:
         return _slideRoute(const WalletsScreen(), settings);
       case transfer:
-        return _bottomSlideRoute(const TransferScreen(), settings);
+        return _slideRoute(const TransferScreen(), settings);
       case profile:
         return _slideRoute(const ProfileSyncScreen(), settings);
       default:

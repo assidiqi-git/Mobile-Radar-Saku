@@ -62,7 +62,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: _buildSectionHeader(
                   'Transaksi Terkini',
                   actionLabel: 'Lihat Semua',
-                  onTap: () => Navigator.pushNamed(context, AppRouter.allTransactions),
+                  onTap: () =>
+                      Navigator.pushNamed(context, AppRouter.allTransactions),
                 ),
               ),
               // Transaction List
@@ -186,17 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ? Icons.sync_problem_rounded
                                 : Icons.check_circle_rounded,
                             color: Colors.white70,
-                            size: 12,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            sync.hasPending
-                                ? '${sync.pendingCount} pending'
-                                : 'Tersinkron',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: Colors.white70,
-                            ),
+                            size: 13,
                           ),
                         ],
                       ),
@@ -208,22 +199,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(
                 CurrencyFormatter.format(totalBalance),
                 style: AppTheme.balanceLarge,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  _buildStatChip(
-                    icon: Icons.arrow_downward_rounded,
-                    label: 'Pemasukan',
-                    color: const Color(0xFF34D399),
-                  ),
-                  const SizedBox(width: 12),
-                  _buildStatChip(
-                    icon: Icons.arrow_upward_rounded,
-                    label: 'Pengeluaran',
-                    color: const Color(0xFFFB7185),
-                  ),
-                ],
               ),
             ],
           ),
@@ -504,15 +479,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // Dummy item for FAB gap — no-op
           return;
         }
-        
+
         // Highlight the tapped tab temporarily while the route is open,
         // then reset back to Beranda (0) when the user returns.
         setState(() => _currentIndex = index);
         final route = index == 1
             ? AppRouter.allTransactions
             : index == 3
-                ? AppRouter.wallets
-                : AppRouter.transfer;
+            ? AppRouter.wallets
+            : AppRouter.transfer;
         Navigator.pushNamed(context, route).then((_) {
           if (mounted) setState(() => _currentIndex = 0);
         });
