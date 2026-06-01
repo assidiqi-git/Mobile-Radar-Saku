@@ -494,17 +494,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildBottomNav() {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
+      type: BottomNavigationBarType.fixed,
       onTap: (index) {
         if (index == 0) {
           // Already on dashboard — no-op
           return;
         }
+        if (index == 2) {
+          // Dummy item for FAB gap — no-op
+          return;
+        }
+        
         // Highlight the tapped tab temporarily while the route is open,
         // then reset back to Beranda (0) when the user returns.
         setState(() => _currentIndex = index);
         final route = index == 1
             ? AppRouter.allTransactions
-            : index == 2
+            : index == 3
                 ? AppRouter.wallets
                 : AppRouter.transfer;
         Navigator.pushNamed(context, route).then((_) {
@@ -519,6 +525,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         BottomNavigationBarItem(
           icon: Icon(Icons.receipt_long_rounded),
           label: 'Transaksi',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(null), // Dummy icon for FAB space
+          label: '',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.account_balance_wallet_rounded),
