@@ -95,4 +95,13 @@ class WalletModel {
         return type;
     }
   }
+
+  /// Equality is based on [id] so Dropdown can match items even after
+  /// copyWith() creates a new instance with updated balance.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is WalletModel && other.id == id);
+
+  @override
+  int get hashCode => id.hashCode;
 }

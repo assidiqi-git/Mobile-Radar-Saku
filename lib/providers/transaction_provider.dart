@@ -9,6 +9,7 @@ import '../models/transaction_category.dart';
 import '../models/transaction_type.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../services/sync_manager.dart';
 
 class TransactionProvider extends ChangeNotifier {
   List<TransactionModel> _transactions = [];
@@ -160,6 +161,24 @@ class TransactionProvider extends ChangeNotifier {
 
     _transactions.insert(0, tx);
     notifyListeners();
+
+    // Fire-and-forget: push to server immediately in background.
+    // If it fails (no internet, etc.) the data stays in SQLite with
+    // synced_at = null and will be picked up by the next manual sync.
+    SyncManager.instance.push().then((count) {
+      if (count > 0) {
+        debugPrint('[TransactionProvider] Background push: $count synced.');
+        // Mark transaction as synced in-memory
+        final idx = _transactions.indexWhere((t) => t.id == tx.id);
+        if (idx != -1) {
+          final syncedAt = DateFormatter.toApiString(DateTime.now());
+          _transactions[idx] = _transactions[idx].copyWith(syncedAt: syncedAt);
+          notifyListeners();
+        }
+      }
+    }).catchError((dynamic e) {
+      debugPrint('[TransactionProvider] Background push failed: $e');
+    });
 
     return tx;
   }

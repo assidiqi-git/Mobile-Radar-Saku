@@ -198,6 +198,14 @@ class DatabaseHelper {
     return db.rawQuery(sql, arguments);
   }
 
+  Future<int> rawUpdate(
+    String sql, [
+    List<Object?>? arguments,
+  ]) async {
+    final db = await database;
+    return db.rawUpdate(sql, arguments);
+  }
+
   /// Clear all user data (on logout)
   Future<void> clearAllUserData() async {
     final db = await database;

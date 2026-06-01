@@ -54,7 +54,7 @@ class SyncManager {
       return synced;
     } catch (e) {
       debugPrint('[SyncManager] Push error: $e');
-      rethrow;
+      return 0;
     }
   }
 

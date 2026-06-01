@@ -52,20 +52,35 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
     try {
       final txProvider = context.read<TransactionProvider>();
+      final walletProvider = context.read<WalletProvider>();
       final syncProvider = context.read<SyncProvider>();
+      final amount = CurrencyFormatter.parse(_amountController.text);
 
+      // 1. Save locally (fires background sync inside addTransaction)
       await txProvider.addTransaction(
         walletId: _selectedWallet!.id,
         transactionCategoryId: _selectedCategory!.id,
         name: _nameController.text.trim(),
-        amount: CurrencyFormatter.parse(_amountController.text),
+        amount: amount,
         note: _noteController.text.trim().isEmpty
             ? null
             : _noteController.text.trim(),
       );
 
+      // 2. Immediately mutate wallet balance in-memory + SQLite
+      final delta = _selectedAction == AppConstants.actionAddition
+          ? amount
+          : _selectedAction == AppConstants.actionDeduction
+              ? -amount
+              : 0.0;
+      if (delta != 0) {
+        await walletProvider.mutateBalance(_selectedWallet!.id, delta);
+      }
+
+      // 3. Increment pending badge (background sync will resolve it)
       syncProvider.incrementPending();
 
+      // 4. Close form — user sees updated balance & transaction immediately
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(

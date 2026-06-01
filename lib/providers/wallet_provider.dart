@@ -4,6 +4,7 @@ import '../core/constants/app_constants.dart';
 import '../core/utils/ulid_generator.dart';
 import '../core/utils/formatters.dart';
 import '../database/database_helper.dart';
+import '../models/transfer.dart';
 import '../models/wallet.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -172,5 +173,78 @@ class WalletProvider extends ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Mutate a wallet's balance locally (SQLite + in-memory).
+  /// [delta] is positive for credit, negative for debit.
+  Future<void> mutateBalance(String walletId, double delta) async {
+    if (delta == 0) return;
+
+    // Update SQLite atomically
+    await DatabaseHelper.instance.rawUpdate(
+      'UPDATE ${AppConstants.tableWallets}'
+      ' SET balance = CAST((CAST(balance AS REAL) + ?) AS TEXT),'
+      ' updated_at = ? WHERE id = ?',
+      [delta, DateFormatter.toApiString(DateTime.now()), walletId],
+    );
+
+    // Mirror in memory so UI reflects instantly
+    final idx = _wallets.indexWhere((w) => w.id == walletId);
+    if (idx != -1) {
+      final newBalance = _wallets[idx].balanceDouble + delta;
+      _wallets[idx] = _wallets[idx].copyWith(
+        balance: newBalance.toStringAsFixed(2),
+      );
+      notifyListeners();
+    }
+  }
+
+  /// Save a transfer locally first, mutate wallet balances instantly,
+  /// then push to the server in the background (fire-and-forget).
+  Future<void> doTransfer({
+    required String fromWalletId,
+    required String toWalletId,
+    required double amount,
+    double fee = 0.0,
+    required String transferDate,
+    String? note,
+  }) async {
+    final now = DateFormatter.toApiString(DateTime.now());
+    final transfer = TransferModel(
+      id: UlidGenerator.generate(),
+      fromWalletId: fromWalletId,
+      toWalletId: toWalletId,
+      amount: amount.toString(),
+      fee: fee.toString(),
+      transferDate: transferDate,
+      note: note,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    // 1. Persist transfer locally
+    await DatabaseHelper.instance.insert(
+      AppConstants.tableTransfers,
+      transfer.toMap(),
+    );
+
+    // 2. Instantly mutate both wallet balances
+    await mutateBalance(fromWalletId, -(amount + fee));
+    await mutateBalance(toWalletId, amount);
+
+    // 3. Fire-and-forget: push to server in background
+    ApiService.instance.storeTransfer(
+      fromWalletId: fromWalletId,
+      toWalletId: toWalletId,
+      amount: amount,
+      fee: fee > 0 ? fee : null,
+      transferDate: transferDate,
+      note: note,
+    ).then((_) {
+      debugPrint('[WalletProvider] Transfer synced to server: ${transfer.id}');
+    }).catchError((dynamic e) {
+      debugPrint('[WalletProvider] Transfer background sync failed: $e');
+      // Data stays in SQLite — will remain available locally.
+    });
   }
 }

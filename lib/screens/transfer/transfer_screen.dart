@@ -6,7 +6,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/wallet.dart';
 import '../../providers/wallet_provider.dart';
-import '../../services/api_service.dart';
 
 class TransferScreen extends StatefulWidget {
   const TransferScreen({super.key});
@@ -66,9 +65,10 @@ class _TransferScreenState extends State<TransferScreen> {
     setState(() => _isLoading = true);
     try {
       final amount = double.tryParse(_amountController.text) ?? 0.0;
-      final fee = double.tryParse(_feeController.text);
+      final fee = double.tryParse(_feeController.text) ?? 0.0;
 
-      await ApiService.instance.storeTransfer(
+      // Offline-first: saves locally + mutates balances + fires bg API call
+      await context.read<WalletProvider>().doTransfer(
         fromWalletId: _fromWallet!.id,
         toWalletId: _toWallet!.id,
         amount: amount,
@@ -79,21 +79,14 @@ class _TransferScreenState extends State<TransferScreen> {
             : _noteController.text.trim(),
       );
 
-      // Refresh wallets (balance changed)
-      if (!mounted) return;
-      await context.read<WalletProvider>().fetchFromServer();
-
+      // Form closes immediately — balance already updated in-memory
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transfer berhasil!')),
+        const SnackBar(content: Text('Transfer berhasil disimpan!')),
       );
-    } on ValidationException catch (e) {
-      _showError(e.message);
-    } on ApiException catch (e) {
-      _showError(e.message);
     } catch (e) {
-      _showError('Transfer gagal. Pastikan Anda terhubung ke internet.');
+      _showError('Gagal menyimpan transfer. Coba lagi.');
     }
 
     if (mounted) setState(() => _isLoading = false);
@@ -128,12 +121,12 @@ class _TransferScreenState extends State<TransferScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline_rounded,
+                    const Icon(Icons.offline_bolt_outlined,
                         color: AppTheme.secondary, size: 18),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Transfer memerlukan koneksi internet dan diproses langsung ke server.',
+                        'Transfer disimpan secara lokal dan disinkronkan ke server di latar belakang.',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppTheme.secondary,
