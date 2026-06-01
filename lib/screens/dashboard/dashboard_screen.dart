@@ -491,14 +491,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
       onTap: (index) {
-        if (index == 1) {
-          Navigator.pushNamed(context, AppRouter.wallets);
-        } else if (index == 2) {
-          Navigator.pushNamed(context, AppRouter.transfer);
-        } else if (index == 3) {
-          Navigator.pushNamed(context, AppRouter.profile);
+        if (index == 0) {
+          // Already on dashboard — no-op
+          return;
         }
+        // Highlight the tapped tab temporarily while the route is open,
+        // then reset back to Beranda (0) when the user returns.
         setState(() => _currentIndex = index);
+        final route = index == 1
+            ? AppRouter.wallets
+            : index == 2
+                ? AppRouter.transfer
+                : AppRouter.profile;
+        Navigator.pushNamed(context, route).then((_) {
+          if (mounted) setState(() => _currentIndex = 0);
+        });
       },
       items: const [
         BottomNavigationBarItem(
