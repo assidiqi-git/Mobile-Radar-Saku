@@ -32,4 +32,14 @@ class AppConstants {
   // API client type header
   static const String clientTypeHeader = 'X-Client-Type';
   static const String clientTypeMobile = 'mobile';
+
+  // Sync status values (stored in SQLite sync_status column)
+  static const String syncStatusPending = 'pending';
+  static const String syncStatusSynced  = 'synced';
+  static const String syncStatusError   = 'error';
+
+  // Validation limits (mirrors OpenAPI spec)
+  static const int maxNameLength    = 255;
+  static const double minAmount     = 0.01;
+  static const int maxPhotoBytes    = 2 * 1024 * 1024; // 2 MB
 }

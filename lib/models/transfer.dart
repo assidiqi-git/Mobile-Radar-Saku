@@ -8,6 +8,8 @@ class TransferModel {
   final String fee;
   final String transferDate;
   final String? note;
+  final String syncStatus;        // 'pending' | 'synced' | 'error'
+  final String? syncErrorMessage;
   final String? createdAt;
   final String? updatedAt;
   final String? deletedAt;
@@ -24,6 +26,8 @@ class TransferModel {
     required this.fee,
     required this.transferDate,
     this.note,
+    this.syncStatus = 'pending',
+    this.syncErrorMessage,
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -49,6 +53,8 @@ class TransferModel {
         fee: (json['fee'] ?? '0').toString(),
         transferDate: json['transfer_date'] as String? ?? '',
         note: json['note'] as String?,
+        syncStatus: 'synced', // from API = always synced
+        syncErrorMessage: null,
         createdAt: json['created_at'] as String?,
         updatedAt: json['updated_at'] as String?,
         deletedAt: json['deleted_at'] as String?,
@@ -68,6 +74,8 @@ class TransferModel {
         'fee': fee,
         'transfer_date': transferDate,
         'note': note,
+        'sync_status': syncStatus,
+        'sync_error_message': syncErrorMessage,
         'created_at': createdAt,
         'updated_at': updatedAt,
         'deleted_at': deletedAt,
@@ -81,6 +89,8 @@ class TransferModel {
         fee: (map['fee'] ?? '0').toString(),
         transferDate: map['transfer_date'] as String? ?? '',
         note: map['note'] as String?,
+        syncStatus: map['sync_status'] as String? ?? 'pending',
+        syncErrorMessage: map['sync_error_message'] as String?,
         createdAt: map['created_at'] as String?,
         updatedAt: map['updated_at'] as String?,
         deletedAt: map['deleted_at'] as String?,
@@ -94,6 +104,8 @@ class TransferModel {
         'fee': fee,
         'transfer_date': transferDate,
         'note': note,
+        'sync_status': syncStatus,
+        'sync_error_message': syncErrorMessage,
         'created_at': createdAt,
         'updated_at': updatedAt,
         'deleted_at': deletedAt,

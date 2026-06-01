@@ -8,7 +8,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
 
   static Database? _database;
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
   static const String _dbName = 'radar_saku.db';
 
   Future<Database> get database async {
@@ -89,7 +89,8 @@ class DatabaseHelper {
         amount TEXT NOT NULL,
         note TEXT,
         photo_url TEXT,
-        synced_at TEXT,
+        sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}',
+        sync_error_message TEXT,
         created_at TEXT,
         updated_at TEXT,
         deleted_at TEXT,
@@ -109,6 +110,8 @@ class DatabaseHelper {
         fee TEXT NOT NULL DEFAULT '0',
         transfer_date TEXT NOT NULL,
         note TEXT,
+        sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}',
+        sync_error_message TEXT,
         created_at TEXT,
         updated_at TEXT,
         deleted_at TEXT
@@ -128,8 +131,8 @@ class DatabaseHelper {
       ON ${AppConstants.tableTransactions}(wallet_id)
     ''');
     await db.execute('''
-      CREATE INDEX idx_transactions_synced_at
-      ON ${AppConstants.tableTransactions}(synced_at)
+      CREATE INDEX idx_transactions_sync_status
+      ON ${AppConstants.tableTransactions}(sync_status)
     ''');
     await db.execute('''
       CREATE INDEX idx_transactions_deleted_at
@@ -142,7 +145,21 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Future migrations go here
+    if (oldVersion < 2) {
+      // Migrate transactions: drop synced_at, add sync_status + sync_error_message
+      await db.execute(
+          "ALTER TABLE ${AppConstants.tableTransactions} ADD COLUMN sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}'");
+      await db.execute(
+          'ALTER TABLE ${AppConstants.tableTransactions} ADD COLUMN sync_error_message TEXT');
+      // Migrate existing synced records
+      await db.execute(
+          "UPDATE ${AppConstants.tableTransactions} SET sync_status = '${AppConstants.syncStatusSynced}' WHERE synced_at IS NOT NULL");
+      // Migrate transfers: add sync_status + sync_error_message
+      await db.execute(
+          "ALTER TABLE ${AppConstants.tableTransfers} ADD COLUMN sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}'");
+      await db.execute(
+          'ALTER TABLE ${AppConstants.tableTransfers} ADD COLUMN sync_error_message TEXT');
+    }
   }
 
   // ---- Generic helpers ----

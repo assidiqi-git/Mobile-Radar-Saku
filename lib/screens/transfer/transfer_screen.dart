@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/wallet.dart';
@@ -155,7 +156,10 @@ class _TransferScreenState extends State<TransferScreen> {
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Jumlah wajib diisi';
                   final amount = double.tryParse(v);
-                  if (amount == null || amount <= 0) return 'Jumlah tidak valid';
+                  if (amount == null) return 'Jumlah tidak valid';
+                  if (amount < AppConstants.minAmount) {
+                    return 'Jumlah minimal Rp${AppConstants.minAmount.toStringAsFixed(2)}';
+                  }
                   return null;
                 },
               ),
@@ -171,6 +175,12 @@ class _TransferScreenState extends State<TransferScreen> {
                   prefixText: 'Rp ',
                   prefixIcon: Icon(Icons.receipt_outlined),
                 ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return null; // optional
+                  final fee = double.tryParse(v);
+                  if (fee == null || fee < 0) return 'Biaya tidak boleh negatif';
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
 

@@ -149,7 +149,7 @@ class TransactionProvider extends ChangeNotifier {
       name: name,
       amount: amount.toString(),
       note: note,
-      syncedAt: null, // pending
+      syncStatus: AppConstants.syncStatusPending, // pending until background sync
       createdAt: now,
       updatedAt: now,
     );
@@ -164,15 +164,16 @@ class TransactionProvider extends ChangeNotifier {
 
     // Fire-and-forget: push to server immediately in background.
     // If it fails (no internet, etc.) the data stays in SQLite with
-    // synced_at = null and will be picked up by the next manual sync.
+    // sync_status = 'pending' and will be picked up by the next manual sync.
     SyncManager.instance.push().then((count) {
       if (count > 0) {
         debugPrint('[TransactionProvider] Background push: $count synced.');
         // Mark transaction as synced in-memory
         final idx = _transactions.indexWhere((t) => t.id == tx.id);
         if (idx != -1) {
-          final syncedAt = DateFormatter.toApiString(DateTime.now());
-          _transactions[idx] = _transactions[idx].copyWith(syncedAt: syncedAt);
+          _transactions[idx] = _transactions[idx].copyWith(
+            syncStatus: AppConstants.syncStatusSynced,
+          );
           notifyListeners();
         }
       }
@@ -183,12 +184,12 @@ class TransactionProvider extends ChangeNotifier {
     return tx;
   }
 
-  /// Soft-delete a transaction locally, mark as unsynced (tombstone).
+  /// Soft-delete a transaction locally, mark as pending sync (tombstone).
   Future<void> deleteTransaction(String id) async {
     final now = DateFormatter.toApiString(DateTime.now());
     await DatabaseHelper.instance.update(
       AppConstants.tableTransactions,
-      {'deleted_at': now, 'synced_at': null},
+      {'deleted_at': now, 'sync_status': AppConstants.syncStatusPending},
       'id = ?',
       [id],
     );

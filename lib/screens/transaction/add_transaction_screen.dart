@@ -133,12 +133,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.sentences,
+                maxLength: AppConstants.maxNameLength,
                 decoration: const InputDecoration(
                   labelText: 'Keterangan',
                   prefixIcon: Icon(Icons.edit_note_rounded),
+                  counterText: '', // hide counter, validation handles it
                 ),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Keterangan wajib diisi' : null,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Keterangan wajib diisi';
+                  if (v.trim().length > AppConstants.maxNameLength) {
+                    return 'Keterangan maks ${AppConstants.maxNameLength} karakter';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               // Wallet Dropdown
@@ -266,7 +273,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       validator: (v) {
         if (v == null || v.isEmpty) return 'Jumlah wajib diisi';
         final amount = CurrencyFormatter.parse(v);
-        if (amount <= 0) return 'Jumlah harus lebih dari 0';
+        if (amount < AppConstants.minAmount) {
+          return 'Jumlah minimal Rp${AppConstants.minAmount.toStringAsFixed(2)}';
+        }
         return null;
       },
     );

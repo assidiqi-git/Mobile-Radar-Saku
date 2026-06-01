@@ -8,8 +8,11 @@ import '../services/api_service.dart';
 
 /// SyncManager handles the offline-first synchronization logic.
 ///
-/// Push: LOCAL → SERVER (transactions where synced_at IS NULL)
+/// Push: LOCAL → SERVER (transactions where sync_status == 'pending')
 /// Pull: SERVER → LOCAL (delta updates since last_synced_at)
+///
+/// Quarantine: If a record fails with 422, it is marked sync_status = 'error'
+/// and NOT discarded. It shows in the UI with an error badge.
 class SyncManager {
   SyncManager._();
   static final SyncManager instance = SyncManager._();
@@ -19,19 +22,22 @@ class SyncManager {
 
   /// Push unsynced local transactions to the server.
   /// Returns the number of transactions successfully synced.
+  ///
+  /// On 422: marks the record as [AppConstants.syncStatusError] (quarantine).
+  /// On network error: silently returns 0 (will retry next time).
   Future<int> push() async {
-    // Fetch all unsynced transactions (including tombstones)
-    final unsyncedRows = await _db.query(
+    // Fetch all pending transactions (not error ones — those need user action)
+    final pendingRows = await _db.query(
       AppConstants.tableTransactions,
-      where: 'synced_at IS NULL',
+      where: "sync_status = '${AppConstants.syncStatusPending}'",
       orderBy: 'created_at ASC',
       limit: AppConstants.syncBatchSize,
     );
 
-    if (unsyncedRows.isEmpty) return 0;
+    if (pendingRows.isEmpty) return 0;
 
-    final transactions =
-        unsyncedRows.map(TransactionModel.fromMap).toList();
+    final transactions = pendingRows.map(TransactionModel.fromMap).toList();
+    int syncedCount = 0;
 
     try {
       final result = await _api.pushTransactions(transactions);
@@ -44,18 +50,43 @@ class SyncManager {
       for (final tx in transactions) {
         batch.update(
           AppConstants.tableTransactions,
-          {'synced_at': now},
+          {
+            'sync_status': AppConstants.syncStatusSynced,
+            'sync_error_message': null,
+            'updated_at': now,
+          },
           where: 'id = ?',
           whereArgs: [tx.id],
         );
       }
       await batch.commit(noResult: true);
-
-      return synced;
+      syncedCount = synced;
+    } on ValidationException catch (e) {
+      // 422: The batch was rejected — quarantine all pending records
+      debugPrint('[SyncManager] Push 422: ${e.message}');
+      final errorMessage = e.message;
+      final db = await _db.database;
+      final batch = db.batch();
+      for (final tx in transactions) {
+        batch.update(
+          AppConstants.tableTransactions,
+          {
+            'sync_status': AppConstants.syncStatusError,
+            'sync_error_message': errorMessage,
+          },
+          where: 'id = ?',
+          whereArgs: [tx.id],
+        );
+      }
+      await batch.commit(noResult: true);
+      // Return 0 — nothing was synced, but we handled it
     } catch (e) {
+      // Network error or unexpected — silent, will retry next push
       debugPrint('[SyncManager] Push error: $e');
       return 0;
     }
+
+    return syncedCount;
   }
 
   /// Pull delta updates from the server and merge into local DB.
@@ -84,17 +115,18 @@ class SyncManager {
           whereArgs: [tx.id],
         );
 
+        // Records from server are always marked as synced
+        final serverRow = tx.copyWith(
+          syncStatus: AppConstants.syncStatusSynced,
+          syncErrorMessage: null,
+        ).toMap();
+
         if (existing.isEmpty) {
-          // New record — insert
-          batch.insert(
-            AppConstants.tableTransactions,
-            tx.copyWith(syncedAt: DateTime.now().toIso8601String()).toMap(),
-          );
+          batch.insert(AppConstants.tableTransactions, serverRow);
         } else {
-          // Existing record — update (handles soft-delete tombstones)
           batch.update(
             AppConstants.tableTransactions,
-            tx.copyWith(syncedAt: DateTime.now().toIso8601String()).toMap(),
+            serverRow,
             where: 'id = ?',
             whereArgs: [tx.id],
           );
@@ -135,7 +167,15 @@ class SyncManager {
   /// Count of pending (unsynced) local transactions.
   Future<int> pendingCount() async {
     final rows = await _db.rawQuery(
-      'SELECT COUNT(*) as count FROM ${AppConstants.tableTransactions} WHERE synced_at IS NULL',
+      "SELECT COUNT(*) as count FROM ${AppConstants.tableTransactions} WHERE sync_status = '${AppConstants.syncStatusPending}'",
+    );
+    return rows.first['count'] as int? ?? 0;
+  }
+
+  /// Count of quarantined (error) local transactions.
+  Future<int> errorCount() async {
+    final rows = await _db.rawQuery(
+      "SELECT COUNT(*) as count FROM ${AppConstants.tableTransactions} WHERE sync_status = '${AppConstants.syncStatusError}'",
     );
     return rows.first['count'] as int? ?? 0;
   }

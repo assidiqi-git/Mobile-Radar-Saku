@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_router.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/transaction.dart';
@@ -626,92 +627,219 @@ class _TransactionListItem extends StatelessWidget {
 
   const _TransactionListItem({required this.transaction});
 
+  void _showErrorDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 20),
+            const SizedBox(width: 8),
+            const Text('Transaksi Bermasalah'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Transaksi ini ditolak oleh server:',
+              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.error.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.error.withOpacity(0.2)),
+              ),
+              child: Text(
+                transaction.syncErrorMessage ?? 'Tidak ada detail error.',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppTheme.error,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Pilih tindakan:',
+              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+        actions: [
+          // Delete: permanently remove + reverse balance
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final txProvider = context.read<TransactionProvider>();
+              final walletProvider = context.read<WalletProvider>();
+              // Reverse wallet balance mutation
+              final action =
+                  transaction.transactionCategory?.transactionType?.action;
+              final amount = transaction.amountDouble;
+              final delta = action == AppConstants.actionAddition
+                  ? -amount
+                  : action == AppConstants.actionDeduction
+                      ? amount
+                      : 0.0;
+              if (delta != 0 && transaction.walletId.isNotEmpty) {
+                await walletProvider.mutateBalance(transaction.walletId, delta);
+              }
+              await txProvider.deleteTransaction(transaction.id);
+            },
+            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
+            child: const Text('Hapus'),
+          ),
+          // Retry: re-open form with pre-filled data
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              // TODO: navigate to edit form with pre-filled data
+              // For now, open a new transaction form
+              Navigator.pushNamed(context, AppRouter.addTransaction);
+            },
+            child: const Text('Coba Lagi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.isIncome;
+    final hasError = transaction.hasError;
     final amountStyle = isIncome ? AppTheme.amountIncome : AppTheme.amountExpense;
     final amountPrefix = isIncome ? '+' : '-';
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isIncome
-                  ? AppTheme.incomeColor.withOpacity(0.1)
-                  : AppTheme.expenseColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isIncome ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-              color: isIncome ? AppTheme.incomeColor : AppTheme.expenseColor,
-              size: 20,
-            ),
+    return GestureDetector(
+      onTap: hasError ? () => _showErrorDialog(context) : null,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: hasError
+              ? AppTheme.error.withOpacity(0.03)
+              : AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasError
+                ? AppTheme.error.withOpacity(0.25)
+                : const Color(0xFFE2E8F0),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  transaction.name,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.onSurface,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  DateFormatter.relativeTime(
-                    DateTime.tryParse(transaction.createdAt ?? ''),
-                  ),
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppTheme.outline,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '$amountPrefix${CurrencyFormatter.format(transaction.amount)}',
-                style: amountStyle,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: hasError
+                    ? AppTheme.error.withOpacity(0.1)
+                    : isIncome
+                        ? AppTheme.incomeColor.withOpacity(0.1)
+                        : AppTheme.expenseColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              if (!transaction.isSynced)
-                Container(
-                  margin: const EdgeInsets.only(top: 2),
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'pending',
+              child: Icon(
+                hasError
+                    ? Icons.error_outline_rounded
+                    : isIncome
+                        ? Icons.arrow_downward_rounded
+                        : Icons.arrow_upward_rounded,
+                color: hasError
+                    ? AppTheme.error
+                    : isIncome
+                        ? AppTheme.incomeColor
+                        : AppTheme.expenseColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    transaction.name,
                     style: GoogleFonts.inter(
-                      fontSize: 9,
-                      color: const Color(0xFFD97706),
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
+                      color: AppTheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormatter.relativeTime(
+                      DateTime.tryParse(transaction.createdAt ?? ''),
+                    ),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppTheme.outline,
                     ),
                   ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '$amountPrefix${CurrencyFormatter.format(transaction.amount)}',
+                  style: amountStyle,
                 ),
-            ],
-          ),
-        ],
+                if (hasError)
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: AppTheme.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.error_outline_rounded,
+                            size: 9, color: AppTheme.error),
+                        const SizedBox(width: 2),
+                        Text(
+                          'error',
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            color: AppTheme.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (transaction.isPending)
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'pending',
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
+                        color: const Color(0xFFD97706),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -9,7 +9,8 @@ class TransactionModel {
   final String amount;
   final String? note;
   final String? photoUrl;
-  final String? syncedAt; // null = pending sync
+  final String syncStatus;       // 'pending' | 'synced' | 'error'
+  final String? syncErrorMessage; // server error JSON when syncStatus == 'error'
   final String? createdAt;
   final String? updatedAt;
   final String? deletedAt;
@@ -26,7 +27,8 @@ class TransactionModel {
     required this.amount,
     this.note,
     this.photoUrl,
-    this.syncedAt,
+    this.syncStatus = 'pending',
+    this.syncErrorMessage,
     this.createdAt,
     this.updatedAt,
     this.deletedAt,
@@ -35,7 +37,9 @@ class TransactionModel {
   });
 
   double get amountDouble => double.tryParse(amount) ?? 0.0;
-  bool get isSynced => syncedAt != null;
+  bool get isSynced  => syncStatus == 'synced';
+  bool get isPending => syncStatus == 'pending';
+  bool get hasError  => syncStatus == 'error';
   bool get isDeleted => deletedAt != null;
 
   bool get isIncome {
@@ -48,6 +52,7 @@ class TransactionModel {
     return action == 'deduction';
   }
 
+  /// Build from API JSON response (server returns synced_at, not sync_status).
   factory TransactionModel.fromJson(Map<String, dynamic> json) =>
       TransactionModel(
         id: json['id'] as String,
@@ -64,7 +69,9 @@ class TransactionModel {
         amount: (json['amount'] ?? '0').toString(),
         note: json['note'] as String?,
         photoUrl: json['photo_url'] as String?,
-        syncedAt: json['synced_at'] as String?,
+        // Records coming from API are always synced
+        syncStatus: 'synced',
+        syncErrorMessage: null,
         createdAt: json['created_at'] as String?,
         updatedAt: json['updated_at'] as String?,
         deletedAt: json['deleted_at'] as String?,
@@ -85,7 +92,8 @@ class TransactionModel {
         'amount': amount,
         'note': note,
         'photo_url': photoUrl,
-        'synced_at': syncedAt,
+        'sync_status': syncStatus,
+        'sync_error_message': syncErrorMessage,
         'created_at': createdAt,
         'updated_at': updatedAt,
         'deleted_at': deletedAt,
@@ -103,6 +111,7 @@ class TransactionModel {
         'deleted_at': deletedAt,
       };
 
+  /// Build from local SQLite row.
   factory TransactionModel.fromMap(Map<String, dynamic> map) =>
       TransactionModel(
         id: map['id'] as String,
@@ -112,7 +121,8 @@ class TransactionModel {
         amount: (map['amount'] ?? '0').toString(),
         note: map['note'] as String?,
         photoUrl: map['photo_url'] as String?,
-        syncedAt: map['synced_at'] as String?,
+        syncStatus: map['sync_status'] as String? ?? 'pending',
+        syncErrorMessage: map['sync_error_message'] as String?,
         createdAt: map['created_at'] as String?,
         updatedAt: map['updated_at'] as String?,
         deletedAt: map['deleted_at'] as String?,
@@ -126,7 +136,8 @@ class TransactionModel {
         'amount': amount,
         'note': note,
         'photo_url': photoUrl,
-        'synced_at': syncedAt,
+        'sync_status': syncStatus,
+        'sync_error_message': syncErrorMessage,
         'created_at': createdAt,
         'updated_at': updatedAt,
         'deleted_at': deletedAt,
@@ -140,7 +151,8 @@ class TransactionModel {
     String? amount,
     String? note,
     String? photoUrl,
-    String? syncedAt,
+    String? syncStatus,
+    String? syncErrorMessage,
     String? createdAt,
     String? updatedAt,
     String? deletedAt,
@@ -156,7 +168,8 @@ class TransactionModel {
         amount: amount ?? this.amount,
         note: note ?? this.note,
         photoUrl: photoUrl ?? this.photoUrl,
-        syncedAt: syncedAt ?? this.syncedAt,
+        syncStatus: syncStatus ?? this.syncStatus,
+        syncErrorMessage: syncErrorMessage ?? this.syncErrorMessage,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         deletedAt: deletedAt ?? this.deletedAt,
