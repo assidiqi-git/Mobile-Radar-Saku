@@ -59,7 +59,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               SliverToBoxAdapter(child: _buildSyncBanner()),
               // Recent Transactions Header
               SliverToBoxAdapter(
-                child: _buildSectionHeader('Transaksi Terkini'),
+                child: _buildSectionHeader(
+                  'Transaksi Terkini',
+                  actionLabel: 'Lihat Semua',
+                  onTap: () => Navigator.pushNamed(context, AppRouter.allTransactions),
+                ),
               ),
               // Transaction List
               _buildTransactionList(),
@@ -499,10 +503,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // then reset back to Beranda (0) when the user returns.
         setState(() => _currentIndex = index);
         final route = index == 1
-            ? AppRouter.wallets
+            ? AppRouter.allTransactions
             : index == 2
-                ? AppRouter.transfer
-                : AppRouter.profile;
+                ? AppRouter.wallets
+                : AppRouter.transfer;
         Navigator.pushNamed(context, route).then((_) {
           if (mounted) setState(() => _currentIndex = 0);
         });
@@ -513,16 +517,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           label: 'Beranda',
         ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.receipt_long_rounded),
+          label: 'Transaksi',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.account_balance_wallet_rounded),
           label: 'Dompet',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.swap_horiz_rounded),
           label: 'Transfer',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_rounded),
-          label: 'Profil',
         ),
       ],
     );

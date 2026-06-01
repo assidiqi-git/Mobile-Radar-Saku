@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/utils/ulid_generator.dart';
@@ -25,8 +25,7 @@ class TransactionProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  List<TransactionModel> get recentTransactions =>
-      transactions.take(20).toList();
+  List<TransactionModel> get recentTransactions => transactions.take(5).toList();
 
   void updateAuth(AuthProvider auth) {
     if (auth.isAuthenticated) {
@@ -46,6 +45,7 @@ class TransactionProvider extends ChangeNotifier {
       loadTransactionTypes(),
     ]);
   }
+
 
   Future<void> loadTransactions() async {
     _isLoading = true;
@@ -239,5 +239,50 @@ class TransactionProvider extends ChangeNotifier {
     return _categories
         .where((c) => c.transactionType?.action == action)
         .toList();
+  }
+
+  /// Filter transactions in-memory from already-loaded SQLite data.
+  /// All parameters are optional — passing null means "no filter for this field".
+  List<TransactionModel> filterTransactions({
+    String? searchText,
+    String? walletId,
+    String? categoryAction,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    return transactions.where((t) {
+      // 1. Search filter (name or note), case-insensitive
+      if (searchText != null && searchText.isNotEmpty) {
+        final q = searchText.toLowerCase();
+        final nameMatch = t.name.toLowerCase().contains(q);
+        final noteMatch = t.note?.toLowerCase().contains(q) ?? false;
+        if (!nameMatch && !noteMatch) return false;
+      }
+
+      // 2. Wallet filter
+      if (walletId != null && walletId.isNotEmpty) {
+        if (t.walletId != walletId) return false;
+      }
+
+      // 3. Category action filter (addition | deduction | neutral)
+      if (categoryAction != null && categoryAction.isNotEmpty) {
+        final action = t.transactionCategory?.transactionType?.action;
+        if (action != categoryAction) return false;
+      }
+
+      // 4. Date range filter
+      if (startDate != null || endDate != null) {
+        final txDate = DateTime.tryParse(t.createdAt ?? '');
+        if (txDate == null) return false;
+        if (startDate != null && txDate.isBefore(startDate)) return false;
+        if (endDate != null) {
+          // Include the full end day
+          final endOfDay = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+          if (txDate.isAfter(endOfDay)) return false;
+        }
+      }
+
+      return true;
+    }).toList();
   }
 }
