@@ -58,6 +58,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       final syncProvider = context.read<SyncProvider>();
       final amount = CurrencyFormatter.parse(_amountController.text);
 
+      if (_selectedAction == AppConstants.actionDeduction) {
+        if (amount > _selectedWallet!.balanceDouble) {
+          setState(() => _isLoading = false);
+          _showError('Saldo dompet tidak mencukupi untuk transaksi ini');
+          return;
+        }
+      }
+
       // 1. Save locally (fires background sync inside addTransaction).
       //    Pass onSyncComplete so the pending badge refreshes from DB
       //    once the background push resolves (success or fail).

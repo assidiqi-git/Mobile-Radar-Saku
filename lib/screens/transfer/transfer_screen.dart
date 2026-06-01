@@ -43,9 +43,9 @@ class _TransferScreenState extends State<TransferScreen> {
       lastDate: DateTime.now().add(const Duration(days: 1)),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: Theme.of(ctx).colorScheme.copyWith(
-                primary: AppTheme.primary,
-              ),
+          colorScheme: Theme.of(
+            ctx,
+          ).colorScheme.copyWith(primary: AppTheme.primary),
         ),
         child: child!,
       ),
@@ -68,6 +68,15 @@ class _TransferScreenState extends State<TransferScreen> {
     try {
       final amount = CurrencyFormatter.parse(_amountController.text);
       final fee = CurrencyFormatter.parse(_feeController.text);
+      final totalDeduction = amount + fee;
+
+      if (totalDeduction > _fromWallet!.balanceDouble) {
+        setState(() => _isLoading = false);
+        _showError(
+          'Saldo dompet asal tidak mencukupi untuk transfer dan biaya',
+        );
+        return;
+      }
 
       // Offline-first: saves locally + mutates balances + fires bg API call
       await context.read<WalletProvider>().doTransfer(
@@ -112,34 +121,6 @@ class _TransferScreenState extends State<TransferScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Info banner
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.secondary.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: AppTheme.secondary.withOpacity(0.2)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.offline_bolt_outlined,
-                        color: AppTheme.secondary, size: 18),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Transfer disimpan secara lokal dan disinkronkan ke server di latar belakang.',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: AppTheme.secondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
               // Wallet selector row
               _buildWalletSelector(),
               const SizedBox(height: 20),
@@ -152,7 +133,10 @@ class _TransferScreenState extends State<TransferScreen> {
                   FilteringTextInputFormatter.digitsOnly,
                   CurrencyInputFormatter(),
                 ],
-                style: AppTheme.monoStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                style: AppTheme.monoStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
                 decoration: const InputDecoration(
                   labelText: 'Jumlah Transfer',
                   prefixText: 'Rp ',
@@ -228,7 +212,9 @@ class _TransferScreenState extends State<TransferScreen> {
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.swap_horiz_rounded),
                 label: const Text('Proses Transfer'),
@@ -253,24 +239,32 @@ class _TransferScreenState extends State<TransferScreen> {
               value: _fromWallet,
               decoration: const InputDecoration(
                 labelText: 'Dari Dompet',
-                prefixIcon: Icon(Icons.arrow_upward_rounded, color: AppTheme.expenseColor),
+                prefixIcon: Icon(
+                  Icons.arrow_upward_rounded,
+                  color: AppTheme.expenseColor,
+                ),
               ),
               isExpanded: true,
               hint: const Text('Pilih dompet asal'),
               items: wallets
-                  .map((w) => DropdownMenuItem(
-                        value: w,
-                        child: Row(
-                          children: [
-                            Text(w.name),
-                            const Spacer(),
-                            Text(
-                              CurrencyFormatter.compact(w.balance),
-                              style: AppTheme.monoStyle(fontSize: 12, color: AppTheme.outline),
+                  .map(
+                    (w) => DropdownMenuItem(
+                      value: w,
+                      child: Row(
+                        children: [
+                          Text(w.name),
+                          const Spacer(),
+                          Text(
+                            CurrencyFormatter.compact(w.balance),
+                            style: AppTheme.monoStyle(
+                              fontSize: 12,
+                              color: AppTheme.outline,
                             ),
-                          ],
-                        ),
-                      ))
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (w) => setState(() => _fromWallet = w),
               validator: (v) => v == null ? 'Pilih dompet asal' : null,
@@ -295,15 +289,15 @@ class _TransferScreenState extends State<TransferScreen> {
               value: _toWallet,
               decoration: const InputDecoration(
                 labelText: 'Ke Dompet',
-                prefixIcon: Icon(Icons.arrow_downward_rounded, color: AppTheme.incomeColor),
+                prefixIcon: Icon(
+                  Icons.arrow_downward_rounded,
+                  color: AppTheme.incomeColor,
+                ),
               ),
               isExpanded: true,
               hint: const Text('Pilih dompet tujuan'),
               items: wallets
-                  .map((w) => DropdownMenuItem(
-                        value: w,
-                        child: Text(w.name),
-                      ))
+                  .map((w) => DropdownMenuItem(value: w, child: Text(w.name)))
                   .toList(),
               onChanged: (w) => setState(() => _toWallet = w),
               validator: (v) => v == null ? 'Pilih dompet tujuan' : null,
