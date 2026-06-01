@@ -54,6 +54,7 @@ class SyncProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    bool success = false;
     try {
       final result = await SyncManager.instance.sync();
       _lastSyncedAt = DateTime.now();
@@ -61,23 +62,35 @@ class SyncProvider extends ChangeNotifier {
         AppConstants.lastSyncedAtKey,
         _lastSyncedAt!.toIso8601String(),
       );
-      _pendingCount = await SyncManager.instance.pendingCount();
       _status = SyncStatus.success;
-      notifyListeners();
+      success = true;
       debugPrint(
           '[SyncProvider] Sync done. Pushed: ${result.pushed}, Pulled: ${result.pulled}');
-      return true;
     } catch (e) {
       _errorMessage = 'Sync gagal: ${e.toString()}';
       _status = SyncStatus.error;
+      debugPrint('[SyncProvider] Sync error: $e');
+    } finally {
+      // Always refresh from DB so the badge shows the real count,
+      // regardless of whether push/pull succeeded or failed.
+      _pendingCount = await SyncManager.instance.pendingCount();
       notifyListeners();
-      return false;
     }
+    return success;
   }
 
-  /// Increment pending count when a new local transaction is added.
+  /// Increment pending count when a new local transaction is saved.
   void incrementPending() {
     _pendingCount++;
     notifyListeners();
+  }
+
+  /// Decrement pending count after a background push succeeds.
+  /// Clamps to 0 to avoid negative values.
+  void decrementPending() {
+    if (_pendingCount > 0) {
+      _pendingCount--;
+      notifyListeners();
+    }
   }
 }

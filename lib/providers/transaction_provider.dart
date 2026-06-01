@@ -134,12 +134,14 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   /// Add a transaction locally. Set synced_at = null for pending sync.
+  /// [onSyncComplete] is called after the background push finishes (success or fail).
   Future<TransactionModel> addTransaction({
     required String walletId,
     required String transactionCategoryId,
     required String name,
     required double amount,
     String? note,
+    VoidCallback? onSyncComplete,
   }) async {
     final now = DateFormatter.toApiString(DateTime.now());
     final tx = TransactionModel(
@@ -177,8 +179,11 @@ class TransactionProvider extends ChangeNotifier {
           notifyListeners();
         }
       }
+      // Notify caller (screen) so it can update SyncProvider badge
+      onSyncComplete?.call();
     }).catchError((dynamic e) {
       debugPrint('[TransactionProvider] Background push failed: $e');
+      onSyncComplete?.call();
     });
 
     return tx;

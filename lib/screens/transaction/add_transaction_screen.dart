@@ -56,7 +56,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       final syncProvider = context.read<SyncProvider>();
       final amount = CurrencyFormatter.parse(_amountController.text);
 
-      // 1. Save locally (fires background sync inside addTransaction)
+      // 1. Save locally (fires background sync inside addTransaction).
+      //    Pass onSyncComplete so the pending badge refreshes from DB
+      //    once the background push resolves (success or fail).
       await txProvider.addTransaction(
         walletId: _selectedWallet!.id,
         transactionCategoryId: _selectedCategory!.id,
@@ -65,6 +67,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         note: _noteController.text.trim().isEmpty
             ? null
             : _noteController.text.trim(),
+        onSyncComplete: () => syncProvider.refreshPendingCount(),
       );
 
       // 2. Immediately mutate wallet balance in-memory + SQLite
@@ -77,8 +80,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         await walletProvider.mutateBalance(_selectedWallet!.id, delta);
       }
 
-      // 3. Increment pending badge (background sync will resolve it)
-      syncProvider.incrementPending();
+      // 3. Read real pending count from DB (not just increment in-memory)
+      await syncProvider.refreshPendingCount();
 
       // 4. Close form — user sees updated balance & transaction immediately
       if (!mounted) return;
