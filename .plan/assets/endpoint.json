@@ -1,0 +1,2527 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Laravel",
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "http://api-radar-saku.test/api"
+    }
+  ],
+  "security": [
+    {
+      "http": []
+    }
+  ],
+  "paths": {
+    "/user": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "operationId": "auth.register",
+        "description": "- Web clients (X-Client-Type: web): returns 201 with user data only.\n  The session cookie is set automatically by Laravel's session handling.\n- Mobile clients: returns 201 with user data and a plaintext Bearer token.",
+        "summary": "Register a new user",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean"
+                        },
+                        "message": {
+                          "type": "string",
+                          "const": "Registration successful."
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "token": {
+                              "type": "string"
+                            },
+                            "user": {
+                              "$ref": "#/components/schemas/User"
+                            }
+                          },
+                          "required": [
+                            "token",
+                            "user"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "success",
+                        "message",
+                        "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean"
+                        },
+                        "message": {
+                          "type": "string",
+                          "const": "Registration successful."
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "user": {
+                              "$ref": "#/components/schemas/User"
+                            }
+                          },
+                          "required": [
+                            "user"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "success",
+                        "message",
+                        "data"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        },
+        "security": []
+      }
+    },
+    "/login": {
+      "post": {
+        "operationId": "auth.login",
+        "description": "Authenticates the user with email and password.\n\n- Web clients (X-Client-Type: web): returns 204 No Content.\n  The HTTP-only session cookie is set automatically by Sanctum's SPA authentication.\n- Mobile clients: returns user data and a plaintext Bearer token.",
+        "summary": "Login",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Login successful."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "token",
+                        "user"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No content"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        },
+        "security": []
+      }
+    },
+    "/logout": {
+      "post": {
+        "operationId": "auth.logout",
+        "description": "- Web clients (X-Client-Type: web): invalidates the session.\n- Mobile clients: revokes the current Bearer token.",
+        "summary": "Logout",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Successfully logged out."
+                    },
+                    "data": {
+                      "type": "null"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        }
+      }
+    },
+    "/sync/transactions": {
+      "post": {
+        "operationId": "sync.transactions",
+        "description": "Accepts a JSON payload containing an array of transactions generated by the\noffline-first mobile app. Each transaction uses a client-generated ULID as its\nprimary key. The endpoint is idempotent: sending the same batch twice will not\nmutate the wallet balance a second time.\n\n**Payload structure:**\n```json\n{\n  \"transactions\": [\n    {\n      \"id\": \"01ARZ3NDEKTSV4RRFFQ69G5FAV\",\n      \"wallet_id\": \"<ulid>\",\n      \"transaction_category_id\": \"<ulid>\",\n      \"amount\": 50000,\n      \"name\": \"Lunch\",\n      \"note\": null,\n      \"created_at\": \"2026-04-29T12:00:00Z\",\n      \"deleted_at\": null\n    }\n  ]\n}\n```\n\n**Balance mutation rules (resolved from category → type → action):**\n- `addition` → wallet balance increased by amount\n- `deduction` → wallet balance decreased by amount\n- `neutral` → no balance change\n\n**Idempotency:**\n- New transaction → apply balance mutation once.\n- Same transaction, same amount → skip (no balance change).\n- Same transaction, different amount → apply only the delta (new − old).\n- `deleted_at` provided → soft-delete and reverse previous balance mutation.\n  Sending `deleted_at` again for an already-deleted record is a no-op.",
+        "summary": "Sync a batch of transactions from the mobile client",
+        "tags": [
+          "Sync"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncTransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Sync completed."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "synced": {
+                          "type": "integer"
+                        },
+                        "skipped": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "synced",
+                        "skipped"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/sync/transactions/pull": {
+      "get": {
+        "operationId": "sync.pullTransactions",
+        "description": "Returns all transactions belonging to the authenticated user, including\nsoft-deleted records (tombstones), so the mobile client can mirror the\nserver state and remove locally deleted records.\n\nPass the optional `last_synced_at` query parameter (ISO 8601 timestamp) to\nperform a **delta sync** — only records with `updated_at >= last_synced_at`\nare returned. Omit the parameter for an **initial full sync**.\n\nResults are ordered by `updated_at` ascending so the client can safely\nadvance its `last_synced_at` cursor to the timestamp of the last record.",
+        "summary": "Pull delta updates for the mobile client",
+        "tags": [
+          "Sync"
+        ],
+        "parameters": [
+          {
+            "name": "last_synced_at",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Pull sync completed."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TransactionResource"
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        }
+      }
+    },
+    "/transactions": {
+      "get": {
+        "operationId": "transactions.index",
+        "description": "Returns a paginated list of all transactions belonging to the authenticated user,\nwith wallet and category (including transaction type) included.",
+        "summary": "List transactions",
+        "tags": [
+          "Transaction"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "type": "string"
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "boolean"
+                        },
+                        "last": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prev": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "first",
+                        "last",
+                        "prev",
+                        "next"
+                      ]
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "last_page",
+                        "per_page",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data",
+                    "links",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        }
+      },
+      "post": {
+        "operationId": "transactions.store",
+        "description": "Creates a new financial transaction and atomically updates the associated wallet balance.\n\n**Balance logic:**\n- If the transaction type name is `income` → wallet balance is **increased** by `amount`.\n- Any other type name (e.g. `outcome`, `saving`) → wallet balance is **decreased** by `amount`.\n\nThe optional `photo` field accepts an image file (max 2MB) stored under `storage/transactions/`.\nThe response includes a `photo_url` pointing to the public URL of the uploaded image.\n\nBoth `Transaction::create()` and `wallet->update()` are wrapped in a `DB::transaction()`\nto guarantee atomicity. If either step fails, both are rolled back.",
+        "summary": "Record a transaction",
+        "tags": [
+          "Transaction"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreTransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Transaction created successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/transactions/{transaction}": {
+      "get": {
+        "operationId": "transactions.show",
+        "description": "Returns a specific transaction with wallet and category details.\nReturns 404 if it does not belong to the authenticated user.",
+        "summary": "Get a transaction",
+        "tags": [
+          "Transaction"
+        ],
+        "parameters": [
+          {
+            "name": "transaction",
+            "in": "path",
+            "required": true,
+            "description": "The transaction ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "transactions.destroy",
+        "description": "Soft-deletes a transaction and atomically reverses the associated wallet balance mutation.\nIf the transaction has a photo, the file is moved to `transactions/trash/` and the\n`photo_path` column is updated to reflect the new location before soft deletion.\n\n**Balance reversal logic:**\n- `addition` transaction → wallet balance is **decreased** by `amount`\n- `deduction` transaction → wallet balance is **increased** by `amount`\n- `neutral` transaction → no balance change",
+        "summary": "Delete a transaction",
+        "tags": [
+          "Transaction"
+        ],
+        "parameters": [
+          {
+            "name": "transaction",
+            "in": "path",
+            "required": true,
+            "description": "The transaction ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/transaction-categories": {
+      "get": {
+        "operationId": "transaction-categories.index",
+        "description": "Returns a paginated list of all transaction categories belonging to the authenticated user,\nwith their associated transaction type included.",
+        "summary": "List transaction categories",
+        "tags": [
+          "TransactionCategory"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "type": "string"
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "boolean"
+                        },
+                        "last": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prev": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "first",
+                        "last",
+                        "prev",
+                        "next"
+                      ]
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "last_page",
+                        "per_page",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data",
+                    "links",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        }
+      },
+      "post": {
+        "operationId": "transaction-categories.store",
+        "description": "Creates a new category linked to a transaction type owned by the authenticated user.\nProviding a `transaction_type_id` that belongs to another user will return a 422 error.",
+        "summary": "Create a transaction category",
+        "tags": [
+          "TransactionCategory"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreTransactionCategoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Transaction category created successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionCategoryResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/transaction-categories/{transactionCategory}": {
+      "get": {
+        "operationId": "transaction-categories.show",
+        "description": "Returns a specific category with its transaction type. Returns 404 if it does not belong\nto the authenticated user.",
+        "summary": "Get a transaction category",
+        "tags": [
+          "TransactionCategory"
+        ],
+        "parameters": [
+          {
+            "name": "transactionCategory",
+            "in": "path",
+            "required": true,
+            "description": "The transaction category ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionCategoryResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      },
+      "put": {
+        "operationId": "transaction-categories.update",
+        "description": "Renames or changes the type of an existing category. All fields are optional.\nThe `transaction_type_id` must belong to the authenticated user.",
+        "summary": "Update a transaction category",
+        "tags": [
+          "TransactionCategory"
+        ],
+        "parameters": [
+          {
+            "name": "transactionCategory",
+            "in": "path",
+            "required": true,
+            "description": "The transaction category ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionCategoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Transaction category updated successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionCategoryResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "transaction-categories.destroy",
+        "description": "Permanently deletes a transaction category.\nReturns 409 Conflict if any transactions are still associated with this category.",
+        "summary": "Delete a transaction category",
+        "tags": [
+          "TransactionCategory"
+        ],
+        "parameters": [
+          {
+            "name": "transactionCategory",
+            "in": "path",
+            "required": true,
+            "description": "The transaction category ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Cannot delete because it has associated records."
+                    },
+                    "errors": {
+                      "type": "null"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "errors"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transaction-types": {
+      "get": {
+        "operationId": "transaction-types.index",
+        "description": "Returns a paginated list of all transaction types belonging to the authenticated user.",
+        "summary": "List transaction types",
+        "tags": [
+          "TransactionType"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "type": "string"
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "boolean"
+                        },
+                        "last": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prev": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "first",
+                        "last",
+                        "prev",
+                        "next"
+                      ]
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "last_page",
+                        "per_page",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data",
+                    "links",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        }
+      },
+      "post": {
+        "operationId": "transaction-types.store",
+        "description": "Creates a new transaction type (e.g. income, outcome, saving) for the authenticated user.",
+        "summary": "Create a transaction type",
+        "tags": [
+          "TransactionType"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreTransactionTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Transaction type created successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionTypeResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/transaction-types/{transactionType}": {
+      "get": {
+        "operationId": "transaction-types.show",
+        "description": "Returns a specific transaction type. Returns 404 if it does not belong to the authenticated user.",
+        "summary": "Get a transaction type",
+        "tags": [
+          "TransactionType"
+        ],
+        "parameters": [
+          {
+            "name": "transactionType",
+            "in": "path",
+            "required": true,
+            "description": "The transaction type ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionTypeResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      },
+      "put": {
+        "operationId": "transaction-types.update",
+        "description": "Renames or updates the description of a transaction type. All fields are optional.",
+        "summary": "Update a transaction type",
+        "tags": [
+          "TransactionType"
+        ],
+        "parameters": [
+          {
+            "name": "transactionType",
+            "in": "path",
+            "required": true,
+            "description": "The transaction type ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTransactionTypeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Transaction type updated successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransactionTypeResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "transaction-types.destroy",
+        "description": "Permanently deletes a transaction type.\nReturns 409 Conflict if any categories are still associated with this type.",
+        "summary": "Delete a transaction type",
+        "tags": [
+          "TransactionType"
+        ],
+        "parameters": [
+          {
+            "name": "transactionType",
+            "in": "path",
+            "required": true,
+            "description": "The transaction type ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          },
+          "409": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Cannot delete because it has associated records."
+                    },
+                    "errors": {
+                      "type": "null"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "errors"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transfers": {
+      "get": {
+        "operationId": "transfers.index",
+        "description": "Returns a paginated list of all fund transfers belonging to the authenticated user,\nwith source and destination wallet details included.",
+        "summary": "List transfers",
+        "tags": [
+          "Transfer"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "type": "string"
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "boolean"
+                        },
+                        "last": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prev": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "first",
+                        "last",
+                        "prev",
+                        "next"
+                      ]
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "last_page",
+                        "per_page",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data",
+                    "links",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        }
+      },
+      "post": {
+        "operationId": "transfers.store",
+        "description": "Atomically transfers funds between two wallets owned by the authenticated user.\n\n**Balance rules:**\n- `from_wallet` is debited by `amount + fee`.\n- `to_wallet` is credited by `amount` only (fee is not passed on).\n- Both wallet updates and the transfer record creation are wrapped in a `DB::transaction()`.\n\nReturns 422 if `from_wallet` does not have sufficient balance to cover `amount + fee`.",
+        "summary": "Create a transfer",
+        "tags": [
+          "Transfer"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreTransferRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Transfer created successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransferResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/transfers/{transfer}": {
+      "get": {
+        "operationId": "transfers.show",
+        "description": "Returns a specific transfer with source and destination wallet details.\nReturns 404 if it does not belong to the authenticated user.",
+        "summary": "Get a transfer",
+        "tags": [
+          "Transfer"
+        ],
+        "parameters": [
+          {
+            "name": "transfer",
+            "in": "path",
+            "required": true,
+            "description": "The transfer ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TransferResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "transfers.destroy",
+        "description": "Soft-deletes a transfer and atomically reverses the wallet balance mutations:\n- `from_wallet` is credited back by `amount + fee`\n- `to_wallet` is debited by `amount`\n\nBoth wallet updates and the soft delete are wrapped in a `DB::transaction()`.",
+        "summary": "Delete a transfer",
+        "tags": [
+          "Transfer"
+        ],
+        "parameters": [
+          {
+            "name": "transfer",
+            "in": "path",
+            "required": true,
+            "description": "The transfer ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    },
+    "/wallets": {
+      "get": {
+        "operationId": "wallets.index",
+        "description": "Returns a paginated list of all wallets belonging to the authenticated user.",
+        "summary": "List wallets",
+        "tags": [
+          "Wallet"
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "type": "string"
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "boolean"
+                        },
+                        "last": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prev": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "next": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "first",
+                        "last",
+                        "prev",
+                        "next"
+                      ]
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "current_page",
+                        "last_page",
+                        "per_page",
+                        "total"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data",
+                    "links",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          }
+        }
+      },
+      "post": {
+        "operationId": "wallets.store",
+        "description": "Creates a new wallet for the authenticated user.",
+        "summary": "Create a wallet",
+        "tags": [
+          "Wallet"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreWalletRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Wallet created successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/WalletResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      }
+    },
+    "/wallets/{wallet}": {
+      "get": {
+        "operationId": "wallets.show",
+        "description": "Returns details of a specific wallet. Returns 404 if it does not belong to the authenticated user.",
+        "summary": "Get a wallet",
+        "tags": [
+          "Wallet"
+        ],
+        "parameters": [
+          {
+            "name": "wallet",
+            "in": "path",
+            "required": true,
+            "description": "The wallet ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Success"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/WalletResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      },
+      "put": {
+        "operationId": "wallets.update",
+        "description": "Partially updates wallet fields. All fields are optional (PATCH semantics).",
+        "summary": "Update a wallet",
+        "tags": [
+          "Wallet"
+        ],
+        "parameters": [
+          {
+            "name": "wallet",
+            "in": "path",
+            "required": true,
+            "description": "The wallet ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWalletRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "const": "Wallet updated successfully."
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/WalletResource"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationException"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "wallets.destroy",
+        "description": "Soft-deletes a wallet. The record is retained in the database but hidden from all queries.\nReturns 404 if it does not belong to the authenticated user.",
+        "summary": "Delete a wallet",
+        "tags": [
+          "Wallet"
+        ],
+        "parameters": [
+          {
+            "name": "wallet",
+            "in": "path",
+            "required": true,
+            "description": "The wallet ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationException"
+          },
+          "404": {
+            "$ref": "#/components/responses/ModelNotFoundException"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "http": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "password_confirmation": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "password_confirmation"
+        ],
+        "title": "RegisterRequest"
+      },
+      "StoreTransactionCategoryRequest": {
+        "type": "object",
+        "properties": {
+          "transaction_type_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "transaction_type_id",
+          "name"
+        ],
+        "title": "StoreTransactionCategoryRequest"
+      },
+      "StoreTransactionRequest": {
+        "type": "object",
+        "properties": {
+          "wallet_id": {
+            "type": "string"
+          },
+          "transaction_category_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0.01
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "photo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "binary",
+            "contentMediaType": "application/octet-stream",
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "wallet_id",
+          "transaction_category_id",
+          "amount",
+          "name"
+        ],
+        "title": "StoreTransactionRequest"
+      },
+      "StoreTransactionTypeRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "action": {
+            "$ref": "#/components/schemas/TransactionAction"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "action"
+        ],
+        "title": "StoreTransactionTypeRequest"
+      },
+      "StoreTransferRequest": {
+        "type": "object",
+        "properties": {
+          "from_wallet_id": {
+            "type": "string"
+          },
+          "to_wallet_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0.01
+          },
+          "fee": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "transfer_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "from_wallet_id",
+          "to_wallet_id",
+          "amount",
+          "transfer_date"
+        ],
+        "title": "StoreTransferRequest"
+      },
+      "StoreWalletRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "checking",
+              "savings",
+              "cash",
+              "investment"
+            ]
+          },
+          "balance": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "StoreWalletRequest"
+      },
+      "SyncTransactionRequest": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                },
+                "wallet_id": {
+                  "type": "string"
+                },
+                "transaction_category_id": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0.01
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "created_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "deleted_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "wallet_id",
+                "transaction_category_id",
+                "amount",
+                "name"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 500
+          }
+        },
+        "required": [
+          "transactions"
+        ],
+        "title": "SyncTransactionRequest"
+      },
+      "TransactionAction": {
+        "type": "string",
+        "enum": [
+          "addition",
+          "deduction",
+          "neutral"
+        ],
+        "title": "TransactionAction"
+      },
+      "TransactionCategoryResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "transaction_type": {
+            "$ref": "#/components/schemas/TransactionTypeResource"
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TransactionCategoryResource"
+      },
+      "TransactionResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "photo_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "wallet": {
+            "$ref": "#/components/schemas/WalletResource"
+          },
+          "transaction_category": {
+            "$ref": "#/components/schemas/TransactionCategoryResource"
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "deleted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "amount",
+          "note",
+          "photo_url",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ],
+        "title": "TransactionResource"
+      },
+      "TransactionTypeResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "action": {
+            "$ref": "#/components/schemas/TransactionAction"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "action",
+          "description",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TransactionTypeResource"
+      },
+      "TransferResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "fee": {
+            "type": "string"
+          },
+          "transfer_date": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "from_wallet": {
+            "$ref": "#/components/schemas/WalletResource"
+          },
+          "to_wallet": {
+            "$ref": "#/components/schemas/WalletResource"
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "fee",
+          "transfer_date",
+          "note",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TransferResource"
+      },
+      "UpdateTransactionCategoryRequest": {
+        "type": "object",
+        "properties": {
+          "transaction_type_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "title": "UpdateTransactionCategoryRequest"
+      },
+      "UpdateTransactionTypeRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "action": {
+            "$ref": "#/components/schemas/TransactionAction"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "title": "UpdateTransactionTypeRequest"
+      },
+      "UpdateWalletRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "checking",
+              "savings",
+              "cash",
+              "investment"
+            ]
+          },
+          "balance": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "title": "UpdateWalletRequest"
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "email_verified_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "email_verified_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "User"
+      },
+      "WalletResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "balance",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "WalletResource"
+      }
+    },
+    "responses": {
+      "ValidationException": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Errors overview."
+                },
+                "errors": {
+                  "type": "object",
+                  "description": "A detailed description of each field that failed validation.",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "required": [
+                "message",
+                "errors"
+              ]
+            }
+          }
+        }
+      },
+      "AuthenticationException": {
+        "description": "Unauthenticated",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Error overview."
+                }
+              },
+              "required": [
+                "message"
+              ]
+            }
+          }
+        }
+      },
+      "ModelNotFoundException": {
+        "description": "Not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Error overview."
+                }
+              },
+              "required": [
+                "message"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
