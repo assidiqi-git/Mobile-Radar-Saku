@@ -112,6 +112,19 @@ class DateFormatter {
     }
   }
 
+  /// Returns date string for grouping (Hari Ini, Kemarin, or 10 Jun 2025)
+  static String displayDateGroup(DateTime? date) {
+    if (date == null) return '-';
+    final now = DateTime.now();
+    final localDate = date.toLocal();
+    final today = DateTime(now.year, now.month, now.day);
+    final dateToCompare = DateTime(localDate.year, localDate.month, localDate.day);
+
+    if (dateToCompare == today) return 'Hari Ini';
+    if (dateToCompare == today.subtract(const Duration(days: 1))) return 'Kemarin';
+    return _displayFormat.format(localDate);
+  }
+
   /// Returns a relative time string like "2 jam lalu", "Kemarin", etc.
   static String relativeTime(DateTime? date) {
     if (date == null) return '-';

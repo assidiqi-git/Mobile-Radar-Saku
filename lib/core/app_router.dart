@@ -8,6 +8,7 @@ import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile/profile_sync_screen.dart';
 import '../screens/transaction/add_transaction_screen.dart';
 import '../screens/transaction/all_transactions_screen.dart';
+import '../screens/transaction/transaction_detail_screen.dart';
 import '../screens/transfer/transfer_screen.dart';
 import '../screens/wallet/wallets_screen.dart';
 
@@ -18,6 +19,7 @@ class AppRouter {
   static const String dashboard = '/dashboard';
   static const String addTransaction = '/add-transaction';
   static const String allTransactions = '/all-transactions';
+  static const String transactionDetail = '/transaction-detail';
   static const String wallets = '/wallets';
   static const String transfer = '/transfer';
   static const String profile = '/profile';
@@ -38,6 +40,9 @@ class AppRouter {
         return _bottomSlideRoute(const AddTransactionScreen(), settings);
       case allTransactions:
         return _slideRoute(const AllTransactionsScreen(), settings);
+      case transactionDetail:
+        final id = settings.arguments as String;
+        return _slideRoute(TransactionDetailScreen(transactionId: id), settings);
       case wallets:
         return _slideRoute(const WalletsScreen(), settings);
       case transfer:

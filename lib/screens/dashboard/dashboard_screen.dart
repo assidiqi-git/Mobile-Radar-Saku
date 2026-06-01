@@ -788,7 +788,17 @@ class _TransactionListItem extends StatelessWidget {
         : AppTheme.onSurfaceVariant; // neutral
 
     return GestureDetector(
-      onTap: hasError ? () => _showErrorDialog(context) : null,
+      onTap: () {
+        if (hasError) {
+          _showErrorDialog(context);
+        } else {
+          Navigator.pushNamed(
+            context,
+            AppRouter.transactionDetail,
+            arguments: transaction.id,
+          );
+        }
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
         padding: const EdgeInsets.all(14),
@@ -830,14 +840,35 @@ class _TransactionListItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    DateFormatter.relativeTime(
-                      DateTime.tryParse(transaction.createdAt ?? ''),
-                    ),
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: AppTheme.outline,
-                    ),
+                  Row(
+                    children: [
+                      if (transaction.transactionCategory != null) ...[
+                        Text(
+                          transaction.transactionCategory!.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: AppTheme.outline,
+                          ),
+                        ),
+                        Text(
+                          ' · ${DateFormatter.relativeTime(DateTime.tryParse(transaction.createdAt ?? ''))}',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: AppTheme.outline,
+                          ),
+                        ),
+                      ] else ...[
+                        Text(
+                          DateFormatter.relativeTime(
+                            DateTime.tryParse(transaction.createdAt ?? ''),
+                          ),
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: AppTheme.outline,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -848,6 +879,16 @@ class _TransactionListItem extends StatelessWidget {
                 Text(
                   '$amountPrefix${CurrencyFormatter.format(transaction.amount)}',
                   style: amountStyle,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  DateFormatter.displayDate(
+                    DateTime.tryParse(transaction.createdAt ?? ''),
+                  ),
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    color: AppTheme.outline,
+                  ),
                 ),
                 if (hasError)
                   Container(

@@ -147,18 +147,30 @@ class DatabaseHelper {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       // Migrate transactions: drop synced_at, add sync_status + sync_error_message
-      await db.execute(
-          "ALTER TABLE ${AppConstants.tableTransactions} ADD COLUMN sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}'");
-      await db.execute(
-          'ALTER TABLE ${AppConstants.tableTransactions} ADD COLUMN sync_error_message TEXT');
+      try {
+        await db.execute(
+            "ALTER TABLE ${AppConstants.tableTransactions} ADD COLUMN sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}'");
+        await db.execute(
+            'ALTER TABLE ${AppConstants.tableTransactions} ADD COLUMN sync_error_message TEXT');
+      } catch (_) {
+        // Ignore if columns already exist
+      }
+      
       // Migrate existing synced records
-      await db.execute(
-          "UPDATE ${AppConstants.tableTransactions} SET sync_status = '${AppConstants.syncStatusSynced}' WHERE synced_at IS NOT NULL");
+      try {
+        await db.execute(
+            "UPDATE ${AppConstants.tableTransactions} SET sync_status = '${AppConstants.syncStatusSynced}' WHERE synced_at IS NOT NULL");
+      } catch (_) {}
+
       // Migrate transfers: add sync_status + sync_error_message
-      await db.execute(
-          "ALTER TABLE ${AppConstants.tableTransfers} ADD COLUMN sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}'");
-      await db.execute(
-          'ALTER TABLE ${AppConstants.tableTransfers} ADD COLUMN sync_error_message TEXT');
+      try {
+        await db.execute(
+            "ALTER TABLE ${AppConstants.tableTransfers} ADD COLUMN sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}'");
+        await db.execute(
+            'ALTER TABLE ${AppConstants.tableTransfers} ADD COLUMN sync_error_message TEXT');
+      } catch (_) {
+        // Ignore if columns already exist
+      }
     }
   }
 

@@ -7,6 +7,7 @@ import '../database/database_helper.dart';
 import '../models/transaction.dart';
 import '../models/transaction_category.dart';
 import '../models/transaction_type.dart';
+import '../models/wallet.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/sync_manager.dart';
@@ -88,8 +89,21 @@ class TransactionProvider extends ChangeNotifier {
           );
         }
 
+        // Reconstruct WalletModel from JOIN columns
+        final walletId = row['wallet_id'] as String?;
+        WalletModel? walletModel;
+        if (walletId != null && row['wallet_name'] != null) {
+          walletModel = WalletModel(
+            id: walletId,
+            name: row['wallet_name'] as String? ?? '',
+            type: row['wallet_type'] as String? ?? '',
+            balance: row['wallet_balance']?.toString() ?? '0',
+          );
+        }
+
         return TransactionModel.fromMap(row).copyWith(
           transactionCategory: categoryModel,
+          wallet: walletModel,
         );
       }).toList();
     } catch (e) {

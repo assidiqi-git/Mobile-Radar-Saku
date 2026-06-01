@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/app_router.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
@@ -181,14 +182,14 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          // 1. Baris Jenis Transaksi
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
             child: Row(
               children: [
-                // Action filters
                 _ActionChip(
-                  label: 'Semua',
+                  label: 'Semua Transaksi',
                   isSelected: _selectedAction == null,
                   onTap: () => setState(() => _selectedAction = null),
                 ),
@@ -214,12 +215,31 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                           ? null
                           : AppConstants.actionDeduction),
                 ),
-                // Wallet chips
-                if (wallets.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  const SizedBox(
-                    height: 28,
-                    child: VerticalDivider(width: 1, color: Color(0xFFE2E8F0)),
+                const SizedBox(width: 8),
+                _ActionChip(
+                  label: 'Netral',
+                  icon: Icons.remove_rounded,
+                  iconColor: AppTheme.secondary,
+                  isSelected: _selectedAction == AppConstants.actionNeutral,
+                  onTap: () => setState(() => _selectedAction =
+                      _selectedAction == AppConstants.actionNeutral
+                          ? null
+                          : AppConstants.actionNeutral),
+                ),
+              ],
+            ),
+          ),
+          // 2. Baris Dompet (jika ada)
+          if (wallets.isNotEmpty)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+              child: Row(
+                children: [
+                  _ActionChip(
+                    label: 'Semua Dompet',
+                    isSelected: _selectedWalletId == null,
+                    onTap: () => setState(() => _selectedWalletId = null),
                   ),
                   const SizedBox(width: 8),
                   ...wallets.map((w) => Padding(
@@ -233,9 +253,10 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                         ),
                       )),
                 ],
-              ],
+              ),
             ),
-          ),
+          if (wallets.isEmpty)
+            const SizedBox(height: 6), // padding bawah jika dompet kosong
         ],
       ),
     );
@@ -294,10 +315,43 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           return _buildEmptyState();
         }
 
+        final groupedItems = <dynamic>[];
+        String? currentDateGroup;
+
+        for (final tx in filtered) {
+          final txDate = DateFormatter.fromApiString(tx.createdAt);
+          final dateGroup = DateFormatter.displayDateGroup(txDate);
+
+          if (currentDateGroup != dateGroup) {
+            groupedItems.add(dateGroup);
+            currentDateGroup = dateGroup;
+          }
+          groupedItems.add(tx);
+        }
+
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-          itemCount: filtered.length,
-          itemBuilder: (_, i) => _TransactionItem(transaction: filtered[i]),
+          itemCount: groupedItems.length,
+          itemBuilder: (_, i) {
+            final item = groupedItems[i];
+            
+            if (item is String) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 16, bottom: 8),
+                child: Text(
+                  item.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.outline,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              );
+            }
+            
+            return _TransactionItem(transaction: item as TransactionModel);
+          },
         );
       },
     );
@@ -464,14 +518,24 @@ class _TransactionItem extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Row(
-        children: [
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            AppRouter.transactionDetail,
+            arguments: transaction.id,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
           // Icon
           Container(
             width: 44,
@@ -559,6 +623,8 @@ class _TransactionItem extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }
