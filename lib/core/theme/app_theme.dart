@@ -80,8 +80,7 @@ class AppTheme {
         foregroundColor: onSurface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleTextStyle: GoogleFonts.getFont(
-          'Geist',
+        titleTextStyle: GoogleFonts.outfit(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: onSurface,
@@ -138,8 +137,7 @@ class AppTheme {
           elevation: 0,
           shape: const StadiumBorder(),
           minimumSize: const Size(double.infinity, 52),
-          textStyle: GoogleFonts.getFont(
-            'Geist',
+          textStyle: GoogleFonts.outfit(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -151,8 +149,7 @@ class AppTheme {
           side: const BorderSide(color: primary),
           shape: const StadiumBorder(),
           minimumSize: const Size(double.infinity, 52),
-          textStyle: GoogleFonts.getFont(
-            'Geist',
+          textStyle: GoogleFonts.outfit(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -206,58 +203,49 @@ class AppTheme {
 
   static TextTheme _buildTextTheme() {
     return TextTheme(
-      // Headlines use Geist
-      displayLarge: GoogleFonts.getFont(
-        'Geist',
+      // Headlines use Outfit (replaces Geist — not available on Google Fonts)
+      displayLarge: GoogleFonts.outfit(
         fontSize: 48,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.02 * 48,
         color: onSurface,
       ),
-      displayMedium: GoogleFonts.getFont(
-        'Geist',
+      displayMedium: GoogleFonts.outfit(
         fontSize: 32,
         fontWeight: FontWeight.w600,
         color: onSurface,
       ),
-      displaySmall: GoogleFonts.getFont(
-        'Geist',
+      displaySmall: GoogleFonts.outfit(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: onSurface,
       ),
-      headlineLarge: GoogleFonts.getFont(
-        'Geist',
+      headlineLarge: GoogleFonts.outfit(
         fontSize: 32,
         fontWeight: FontWeight.w600,
         color: onSurface,
       ),
-      headlineMedium: GoogleFonts.getFont(
-        'Geist',
+      headlineMedium: GoogleFonts.outfit(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: onSurface,
       ),
-      headlineSmall: GoogleFonts.getFont(
-        'Geist',
+      headlineSmall: GoogleFonts.outfit(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: onSurface,
       ),
-      titleLarge: GoogleFonts.getFont(
-        'Geist',
+      titleLarge: GoogleFonts.outfit(
         fontSize: 18,
         fontWeight: FontWeight.w500,
         color: onSurface,
       ),
-      titleMedium: GoogleFonts.getFont(
-        'Geist',
+      titleMedium: GoogleFonts.outfit(
         fontSize: 16,
         fontWeight: FontWeight.w500,
         color: onSurface,
       ),
-      titleSmall: GoogleFonts.getFont(
-        'Geist',
+      titleSmall: GoogleFonts.outfit(
         fontSize: 14,
         fontWeight: FontWeight.w500,
         color: onSurface,

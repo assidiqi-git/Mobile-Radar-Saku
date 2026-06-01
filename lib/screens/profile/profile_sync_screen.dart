@@ -62,8 +62,7 @@ class ProfileSyncScreen extends StatelessWidget {
                 user?.name.isNotEmpty == true
                     ? user!.name[0].toUpperCase()
                     : 'U',
-                style: GoogleFonts.getFont(
-                  'Geist',
+                style: GoogleFonts.outfit(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
@@ -78,8 +77,7 @@ class ProfileSyncScreen extends StatelessWidget {
               children: [
                 Text(
                   user?.name ?? '-',
-                  style: GoogleFonts.getFont(
-                    'Geist',
+                  style: GoogleFonts.outfit(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -145,8 +143,7 @@ class ProfileSyncScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Sinkronisasi',
-                        style: GoogleFonts.getFont(
-                          'Geist',
+                        style: GoogleFonts.outfit(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.onSurface,
@@ -327,8 +324,7 @@ class ProfileSyncScreen extends StatelessWidget {
       icon: const Icon(Icons.logout_rounded, color: AppTheme.expenseColor),
       label: Text(
         'Keluar',
-        style: GoogleFonts.getFont(
-          'Geist',
+        style: GoogleFonts.outfit(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppTheme.expenseColor,

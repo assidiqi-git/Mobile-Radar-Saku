@@ -94,8 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               Text(
                 'Dashboard',
-                style: GoogleFonts.getFont(
-                  'Geist',
+                style: GoogleFonts.outfit(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.onSurface,
@@ -381,8 +380,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Text(
             title,
-            style: GoogleFonts.getFont(
-              'Geist',
+            style: GoogleFonts.outfit(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppTheme.onSurface,
@@ -461,8 +459,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 16),
             Text(
               'Belum ada transaksi',
-              style: GoogleFonts.getFont(
-                'Geist',
+              style: GoogleFonts.outfit(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.onSurfaceVariant,

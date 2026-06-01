@@ -99,8 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Center(
                 child: Text(
                   'Radar Saku',
-                  style: GoogleFonts.getFont(
-                    'Geist',
+                  style: GoogleFonts.outfit(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.onSurface,
@@ -140,8 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text(
                         'Masuk',
-                        style: GoogleFonts.getFont(
-                          'Geist',
+                        style: GoogleFonts.outfit(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.onSurface,

@@ -106,8 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Center(
                 child: Text(
                   'Radar Saku',
-                  style: GoogleFonts.getFont(
-                    'Geist',
+                  style: GoogleFonts.outfit(
                     fontSize: 26,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.onSurface,
@@ -147,8 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       Text(
                         'Daftar',
-                        style: GoogleFonts.getFont(
-                          'Geist',
+                        style: GoogleFonts.outfit(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.onSurface,

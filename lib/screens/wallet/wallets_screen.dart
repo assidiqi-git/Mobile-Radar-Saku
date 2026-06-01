@@ -108,8 +108,7 @@ class WalletsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Belum ada dompet',
-            style: GoogleFonts.getFont(
-              'Geist',
+            style: GoogleFonts.outfit(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppTheme.onSurfaceVariant,
@@ -182,8 +181,7 @@ class _WalletTile extends StatelessWidget {
               children: [
                 Text(
                   wallet.name,
-                  style: GoogleFonts.getFont(
-                    'Geist',
+                  style: GoogleFonts.outfit(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.onSurface,
@@ -389,8 +387,7 @@ class _AddWalletSheetState extends State<_AddWalletSheet> {
               const SizedBox(height: 20),
               Text(
                 isEdit ? 'Edit Dompet' : 'Tambah Dompet',
-                style: GoogleFonts.getFont(
-                  'Geist',
+                style: GoogleFonts.outfit(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),

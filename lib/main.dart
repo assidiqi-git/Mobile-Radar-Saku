@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'core/app_router.dart';
@@ -18,6 +19,9 @@ Future<void> main() async {
 
   // Initialize SQLite database
   await DatabaseHelper.instance.database;
+
+  // Initialize locale data for Indonesian date formatting
+  await initializeDateFormatting('id_ID', null);
 
   runApp(const RadarSakuApp());
 }
