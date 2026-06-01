@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -244,7 +246,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   Widget _buildAmountField() {
     return TextFormField(
       controller: _amountController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        CurrencyInputFormatter(),
+      ],
       style: AppTheme.monoStyle(
         fontSize: 28,
         fontWeight: FontWeight.w700,
@@ -276,8 +282,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       validator: (v) {
         if (v == null || v.isEmpty) return 'Jumlah wajib diisi';
         final amount = CurrencyFormatter.parse(v);
-        if (amount < AppConstants.minAmount) {
-          return 'Jumlah minimal Rp${AppConstants.minAmount.toStringAsFixed(2)}';
+        if (amount < 1) {
+          return 'Jumlah minimal Rp1';
         }
         return null;
       },

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -309,7 +312,12 @@ class _AddWalletSheetState extends State<_AddWalletSheet> {
     super.initState();
     if (isEdit) {
       _nameController.text = widget.walletToEdit!.name;
-      _balanceController.text = widget.walletToEdit!.balance;
+      
+      final intBalance = double.tryParse(widget.walletToEdit!.balance)?.toInt() ?? 0;
+      _balanceController.text = intBalance == 0 
+          ? '' 
+          : NumberFormat.decimalPattern('id_ID').format(intBalance);
+          
       _selectedType = widget.walletToEdit!.type;
     }
   }
@@ -326,7 +334,7 @@ class _AddWalletSheetState extends State<_AddWalletSheet> {
     setState(() => _isLoading = true);
 
     final provider = context.read<WalletProvider>();
-    final balance = double.tryParse(_balanceController.text) ?? 0.0;
+    final balance = CurrencyFormatter.parse(_balanceController.text);
 
     if (isEdit) {
       await provider.updateWallet(
@@ -418,9 +426,11 @@ class _AddWalletSheetState extends State<_AddWalletSheet> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _balanceController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  CurrencyInputFormatter(),
+                ],
                 style: AppTheme.monoStyle(fontSize: 16),
                 decoration: const InputDecoration(
                   labelText: 'Saldo Awal',

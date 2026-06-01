@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/wallet.dart';
@@ -65,8 +66,8 @@ class _TransferScreenState extends State<TransferScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final amount = double.tryParse(_amountController.text) ?? 0.0;
-      final fee = double.tryParse(_feeController.text) ?? 0.0;
+      final amount = CurrencyFormatter.parse(_amountController.text);
+      final fee = CurrencyFormatter.parse(_feeController.text);
 
       // Offline-first: saves locally + mutates balances + fires bg API call
       await context.read<WalletProvider>().doTransfer(
@@ -146,7 +147,11 @@ class _TransferScreenState extends State<TransferScreen> {
               // Amount
               TextFormField(
                 controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  CurrencyInputFormatter(),
+                ],
                 style: AppTheme.monoStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 decoration: const InputDecoration(
                   labelText: 'Jumlah Transfer',
@@ -155,20 +160,22 @@ class _TransferScreenState extends State<TransferScreen> {
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Jumlah wajib diisi';
-                  final amount = double.tryParse(v);
-                  if (amount == null) return 'Jumlah tidak valid';
-                  if (amount < AppConstants.minAmount) {
-                    return 'Jumlah minimal Rp${AppConstants.minAmount.toStringAsFixed(2)}';
+                  final amount = CurrencyFormatter.parse(v);
+                  if (amount < 1) {
+                    return 'Jumlah minimal Rp1';
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
 
-              // Fee (optional)
               TextFormField(
                 controller: _feeController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  CurrencyInputFormatter(),
+                ],
                 style: AppTheme.monoStyle(fontSize: 16),
                 decoration: const InputDecoration(
                   labelText: 'Biaya Transfer (opsional)',
@@ -177,8 +184,8 @@ class _TransferScreenState extends State<TransferScreen> {
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return null; // optional
-                  final fee = double.tryParse(v);
-                  if (fee == null || fee < 0) return 'Biaya tidak boleh negatif';
+                  final fee = CurrencyFormatter.parse(v);
+                  if (fee < 0) return 'Biaya tidak boleh negatif';
                   return null;
                 },
               ),

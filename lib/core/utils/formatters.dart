@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class CurrencyFormatter {
@@ -33,12 +34,45 @@ class CurrencyFormatter {
 
   /// Parse IDR string back to double.
   static double parse(String formattedAmount) {
+    if (formattedAmount.isEmpty) return 0.0;
     final cleaned = formattedAmount
         .replaceAll('Rp', '')
-        .replaceAll('.', '')
-        .replaceAll(',', '.')
+        .replaceAll('.', '') // Hapus pemisah ribuan
+        .replaceAll(',', '.') // Just in case, replace comma with dot for decimals
         .trim();
     return double.tryParse(cleaned) ?? 0.0;
+  }
+}
+
+class CurrencyInputFormatter extends TextInputFormatter {
+  static final NumberFormat _formatter = NumberFormat.decimalPattern('id_ID');
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    // Hanya biarkan digit (angka)
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+    
+    if (digitsOnly.isEmpty) {
+      return const TextEditingValue(
+        text: '',
+        selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    final int value = int.parse(digitsOnly);
+    final String newText = _formatter.format(value);
+
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
   }
 }
 
