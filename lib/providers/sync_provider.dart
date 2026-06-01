@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../core/constants/app_constants.dart';
 import '../database/database_helper.dart';
 import '../providers/auth_provider.dart';
+import '../services/connectivity_service.dart';
 import '../services/sync_manager.dart';
 
 enum SyncStatus { idle, syncing, success, error }
@@ -20,16 +21,36 @@ class SyncProvider extends ChangeNotifier {
   bool get isSyncing => _status == SyncStatus.syncing;
   bool get hasPending => _pendingCount > 0;
 
+  /// Called by [ChangeNotifierProxyProvider] whenever [AuthProvider] changes.
   void updateAuth(AuthProvider auth) {
     if (auth.isAuthenticated) {
       refreshPendingCount();
       _loadLastSyncedAt();
+      _initConnectivityService(auth);
     } else {
       _pendingCount = 0;
       _lastSyncedAt = null;
       _status = SyncStatus.idle;
+      // Stop listening when logged out — no need to auto-sync unauthenticated
+      ConnectivityService.instance.dispose();
       notifyListeners();
     }
+  }
+
+  void _initConnectivityService(AuthProvider auth) {
+    ConnectivityService.instance.init(
+      // Pass live getters so ConnectivityService always reads the current state.
+      isAuthenticated: () => auth.isAuthenticated,
+      isSyncing: () => isSyncing,
+      onReconnect: _autoSync,
+    );
+  }
+
+  /// Triggered by [ConnectivityService] after an offline→online transition.
+  /// Runs a full sync and refreshes the pending badge.
+  Future<void> _autoSync() async {
+    debugPrint('[SyncProvider] Auto-sync triggered by network reconnect.');
+    await sync();
   }
 
   Future<void> _loadLastSyncedAt() async {
@@ -92,5 +113,11 @@ class SyncProvider extends ChangeNotifier {
       _pendingCount--;
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    ConnectivityService.instance.dispose();
+    super.dispose();
   }
 }
