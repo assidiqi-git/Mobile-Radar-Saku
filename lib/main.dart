@@ -1,19 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MainApp());
+import 'core/app_router.dart';
+import 'core/theme/app_theme.dart';
+import 'database/database_helper.dart';
+import 'providers/auth_provider.dart';
+import 'providers/sync_provider.dart';
+import 'providers/transaction_provider.dart';
+import 'providers/wallet_provider.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: '.env');
+
+  // Initialize SQLite database
+  await DatabaseHelper.instance.database;
+
+  runApp(const RadarSakuApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class RadarSakuApp extends StatelessWidget {
+  const RadarSakuApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, WalletProvider>(
+          create: (_) => WalletProvider(),
+          update: (_, auth, wallet) => wallet!..updateAuth(auth),
         ),
+        ChangeNotifierProxyProvider<AuthProvider, TransactionProvider>(
+          create: (_) => TransactionProvider(),
+          update: (_, auth, tx) => tx!..updateAuth(auth),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, SyncProvider>(
+          create: (_) => SyncProvider(),
+          update: (_, auth, sync) => sync!..updateAuth(auth),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Radar Saku',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        onGenerateRoute: AppRouter.onGenerateRoute,
+        initialRoute: AppRouter.splash,
       ),
     );
   }
