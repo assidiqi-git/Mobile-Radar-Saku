@@ -236,7 +236,7 @@ class _TransferScreenState extends State<TransferScreen> {
         return Column(
           children: [
             DropdownButtonFormField<WalletModel>(
-              value: _fromWallet,
+              initialValue: _fromWallet,
               decoration: const InputDecoration(
                 labelText: 'Dari Dompet',
                 prefixIcon: Icon(
@@ -286,7 +286,7 @@ class _TransferScreenState extends State<TransferScreen> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<WalletModel>(
-              value: _toWallet,
+              initialValue: _toWallet,
               decoration: const InputDecoration(
                 labelText: 'Ke Dompet',
                 prefixIcon: Icon(

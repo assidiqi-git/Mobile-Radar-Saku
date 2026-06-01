@@ -25,8 +25,18 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
   assets:
     - .env
+
+flutter_icons:
+  android: true       # Set true untuk membuat icon Android
+  ios: true           # Set true untuk membuat icon iOS
+  image_path: "assets/icon_tanpa_bg.png" # Path menuju gambar icon Anda
+  
+  # Opsional: Jika Anda ingin background warna khusus untuk Android 8.0+ (Adaptive Icons)
+  adaptive_icon_background: "#0A192F"
+  # adaptive_icon_foreground: "assets/icon_aplikasi_foreground.png"

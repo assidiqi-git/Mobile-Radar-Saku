@@ -408,7 +408,7 @@ class _AddWalletSheetState extends State<_AddWalletSheet> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedType,
+                initialValue: _selectedType,
                 decoration: const InputDecoration(
                   labelText: 'Tipe Dompet',
                   prefixIcon: Icon(Icons.category_outlined),

@@ -84,8 +84,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       final delta = _selectedAction == AppConstants.actionAddition
           ? amount
           : _selectedAction == AppConstants.actionDeduction
-              ? -amount
-              : 0.0;
+          ? -amount
+          : 0.0;
       if (delta != 0) {
         await walletProvider.mutateBalance(_selectedWallet!.id, delta);
       }
@@ -153,7 +153,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   counterText: '', // hide counter, validation handles it
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Keterangan wajib diisi';
+                  if (v == null || v.trim().isEmpty)
+                    return 'Keterangan wajib diisi';
                   if (v.trim().length > AppConstants.maxNameLength) {
                     return 'Keterangan maks ${AppConstants.maxNameLength} karakter';
                   }
@@ -265,8 +266,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         color: _selectedAction == AppConstants.actionDeduction
             ? AppTheme.expenseColor
             : _selectedAction == AppConstants.actionAddition
-                ? AppTheme.incomeColor
-                : AppTheme.secondary,
+            ? AppTheme.incomeColor
+            : AppTheme.secondary,
       ),
       decoration: InputDecoration(
         prefixText: 'Rp ',
@@ -285,7 +286,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppTheme.outlineVariant),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 18,
+        ),
       ),
       validator: (v) {
         if (v == null || v.isEmpty) return 'Jumlah wajib diisi';
@@ -303,7 +307,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       builder: (context, walletProvider, _) {
         final wallets = walletProvider.wallets;
         return DropdownButtonFormField<WalletModel>(
-          value: _selectedWallet,
+          initialValue: _selectedWallet,
           decoration: const InputDecoration(
             labelText: 'Dompet',
             prefixIcon: Icon(Icons.account_balance_wallet_outlined),
@@ -342,7 +346,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       builder: (context, txProvider, _) {
         final categories = txProvider.getCategoriesByAction(_selectedAction);
         return DropdownButtonFormField<TransactionCategoryModel>(
-          value: _selectedCategory,
+          initialValue: _selectedCategory,
           decoration: const InputDecoration(
             labelText: 'Kategori',
             prefixIcon: Icon(Icons.category_outlined),
@@ -350,12 +354,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           isExpanded: true,
           hint: const Text('Pilih kategori'),
           items: categories
-              .map(
-                (c) => DropdownMenuItem(
-                  value: c,
-                  child: Text(c.name),
-                ),
-              )
+              .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
               .toList(),
           onChanged: (c) => setState(() => _selectedCategory = c),
           validator: (v) => v == null ? 'Pilih kategori' : null,
@@ -391,9 +390,7 @@ class _TypeChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? color.withOpacity(0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: selected
-                ? Border.all(color: color.withOpacity(0.4))
-                : null,
+            border: selected ? Border.all(color: color.withOpacity(0.4)) : null,
           ),
           child: Column(
             children: [
