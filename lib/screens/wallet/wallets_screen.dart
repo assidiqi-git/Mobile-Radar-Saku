@@ -34,8 +34,7 @@ class WalletsScreen extends StatelessWidget {
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                         itemCount: wallets.length,
-                        itemBuilder: (_, i) =>
-                            _WalletTile(wallet: wallets[i]),
+                        itemBuilder: (_, i) => _WalletTile(wallet: wallets[i]),
                       ),
               ),
             ],
@@ -117,10 +116,7 @@ class WalletsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Tambahkan dompet pertama Anda',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: AppTheme.outline,
-            ),
+            style: GoogleFonts.inter(fontSize: 14, color: AppTheme.outline),
           ),
         ],
       ),
@@ -422,7 +418,9 @@ class _AddWalletSheetState extends State<_AddWalletSheet> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _balanceController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 style: AppTheme.monoStyle(fontSize: 16),
                 decoration: const InputDecoration(
                   labelText: 'Saldo Awal',
@@ -437,7 +435,9 @@ class _AddWalletSheetState extends State<_AddWalletSheet> {
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : Text(isEdit ? 'Simpan Perubahan' : 'Tambah Dompet'),
               ),

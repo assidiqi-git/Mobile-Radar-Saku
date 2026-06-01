@@ -65,8 +65,32 @@ class TransactionProvider extends ChangeNotifier {
       ''');
 
       _transactions = rows.map((row) {
-        final tx = TransactionModel.fromMap(row);
-        return tx;
+        // Reconstruct TransactionTypeModel from the JOIN columns
+        final action = row['type_action'] as String?;
+        TransactionTypeModel? typeModel;
+        if (action != null) {
+          typeModel = TransactionTypeModel(
+            id: row['transaction_type_id'] as String? ?? '',
+            name: row['type_name'] as String? ?? '',
+            action: action,
+          );
+        }
+
+        // Reconstruct TransactionCategoryModel from the JOIN columns
+        final catId = row['transaction_category_id'] as String?;
+        TransactionCategoryModel? categoryModel;
+        if (catId != null) {
+          categoryModel = TransactionCategoryModel(
+            id: catId,
+            transactionTypeId: row['transaction_type_id'] as String? ?? '',
+            name: row['category_name'] as String? ?? '',
+            transactionType: typeModel,
+          );
+        }
+
+        return TransactionModel.fromMap(row).copyWith(
+          transactionCategory: categoryModel,
+        );
       }).toList();
     } catch (e) {
       _errorMessage = e.toString();
@@ -154,6 +178,11 @@ class TransactionProvider extends ChangeNotifier {
       syncStatus: AppConstants.syncStatusPending, // pending until background sync
       createdAt: now,
       updatedAt: now,
+      // Look up the full category model so the new transaction shows the
+      // correct icon/color immediately, before the next DB reload.
+      transactionCategory: _categories
+          .where((c) => c.id == transactionCategoryId)
+          .firstOrNull,
     );
 
     await DatabaseHelper.instance.insert(

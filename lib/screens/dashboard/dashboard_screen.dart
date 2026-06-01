@@ -33,10 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadData() async {
     final wallet = context.read<WalletProvider>();
     final tx = context.read<TransactionProvider>();
-    await Future.wait([
-      wallet.loadFromLocal(),
-      tx.loadAll(),
-    ]);
+    await Future.wait([wallet.loadFromLocal(), tx.loadAll()]);
     // If no local data, fetch from server
     if (wallet.wallets.isEmpty) await wallet.fetchFromServer();
     if (tx.categories.isEmpty) await tx.fetchCategoriesFromServer();
@@ -61,7 +58,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Pending Sync Banner
               SliverToBoxAdapter(child: _buildSyncBanner()),
               // Recent Transactions Header
-              SliverToBoxAdapter(child: _buildSectionHeader('Transaksi Terkini')),
+              SliverToBoxAdapter(
+                child: _buildSectionHeader('Transaksi Terkini'),
+              ),
               // Transaction List
               _buildTransactionList(),
               const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -168,7 +167,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
@@ -244,10 +245,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: Colors.white70,
-            ),
+            style: GoogleFonts.inter(fontSize: 12, color: Colors.white70),
           ),
         ],
       ),
@@ -258,15 +256,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Dompet Saya', actionLabel: 'Lihat Semua', onTap: () {
-          Navigator.pushNamed(context, AppRouter.wallets);
-        }),
+        _buildSectionHeader(
+          'Dompet Saya',
+          actionLabel: 'Lihat Semua',
+          onTap: () {
+            Navigator.pushNamed(context, AppRouter.wallets);
+          },
+        ),
         Consumer<WalletProvider>(
           builder: (context, walletProvider, _) {
             final wallets = walletProvider.wallets;
             if (wallets.isEmpty) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: _buildEmptyWalletCard(),
               );
             }
@@ -338,7 +343,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.sync_rounded, color: Color(0xFFD97706), size: 18),
+              const Icon(
+                Icons.sync_rounded,
+                color: Color(0xFFD97706),
+                size: 18,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -373,8 +382,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title,
-      {String? actionLabel, VoidCallback? onTap}) {
+  Widget _buildSectionHeader(
+    String title, {
+    String? actionLabel,
+    VoidCallback? onTap,
+  }) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
       child: Row(
@@ -421,16 +433,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         final transactions = txProvider.recentTransactions;
         if (transactions.isEmpty) {
-          return SliverToBoxAdapter(
-            child: _buildEmptyTransactions(),
-          );
+          return SliverToBoxAdapter(child: _buildEmptyTransactions());
         }
 
         return SliverList(
           delegate: SliverChildBuilderDelegate(
-            (context, index) => _TransactionListItem(
-              transaction: transactions[index],
-            ),
+            (context, index) =>
+                _TransactionListItem(transaction: transactions[index]),
             childCount: transactions.length,
           ),
         );
@@ -470,10 +479,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text(
               'Catat transaksi pertama Anda\ndengan menekan tombol +',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: AppTheme.outline,
-              ),
+              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.outline),
             ),
           ],
         ),
@@ -633,7 +639,11 @@ class _TransactionListItem extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.error_outline_rounded, color: AppTheme.error, size: 20),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppTheme.error,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             const Text('Transaksi Bermasalah'),
           ],
@@ -644,7 +654,10 @@ class _TransactionListItem extends StatelessWidget {
           children: [
             Text(
               'Transaksi ini ditolak oleh server:',
-              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.onSurfaceVariant),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppTheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 8),
             Container(
@@ -657,16 +670,16 @@ class _TransactionListItem extends StatelessWidget {
               ),
               child: Text(
                 transaction.syncErrorMessage ?? 'Tidak ada detail error.',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppTheme.error,
-                ),
+                style: GoogleFonts.inter(fontSize: 12, color: AppTheme.error),
               ),
             ),
             const SizedBox(height: 12),
             Text(
               'Pilih tindakan:',
-              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.onSurfaceVariant),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppTheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -684,8 +697,8 @@ class _TransactionListItem extends StatelessWidget {
               final delta = action == AppConstants.actionAddition
                   ? -amount
                   : action == AppConstants.actionDeduction
-                      ? amount
-                      : 0.0;
+                  ? amount
+                  : 0.0;
               if (delta != 0 && transaction.walletId.isNotEmpty) {
                 await walletProvider.mutateBalance(transaction.walletId, delta);
               }
@@ -711,10 +724,47 @@ class _TransactionListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isIncome = transaction.isIncome;
+    // Resolve the transaction action (addition | deduction | neutral)
+    final action = transaction.transactionCategory?.transactionType?.action;
+    final isIncome = action == AppConstants.actionAddition;
+    final isExpense = action == AppConstants.actionDeduction;
+    // neutral covers both explicit 'neutral' AND unknown/null action
+    final isNeutral = !isIncome && !isExpense;
+
     final hasError = transaction.hasError;
-    final amountStyle = isIncome ? AppTheme.amountIncome : AppTheme.amountExpense;
-    final amountPrefix = isIncome ? '+' : '-';
+
+    // Amount display
+    final String amountPrefix = isIncome
+        ? '+'
+        : isExpense
+        ? '-'
+        : '~';
+    final TextStyle amountStyle = isIncome
+        ? AppTheme.amountIncome
+        : isExpense
+        ? AppTheme.amountExpense
+        : AppTheme.monoStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.onSurfaceVariant,
+          );
+
+    // Icon + tint color for the leading circle
+    final IconData actionIcon = hasError
+        ? Icons.error_outline_rounded
+        : isIncome
+        ? Icons.arrow_downward_rounded
+        : isExpense
+        ? Icons.arrow_upward_rounded
+        : Icons.swap_horiz_rounded; // neutral
+
+    final Color actionColor = hasError
+        ? AppTheme.error
+        : isIncome
+        ? AppTheme.incomeColor
+        : isExpense
+        ? AppTheme.expenseColor
+        : AppTheme.onSurfaceVariant; // neutral
 
     return GestureDetector(
       onTap: hasError ? () => _showErrorDialog(context) : null,
@@ -738,26 +788,10 @@ class _TransactionListItem extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: hasError
-                    ? AppTheme.error.withOpacity(0.1)
-                    : isIncome
-                        ? AppTheme.incomeColor.withOpacity(0.1)
-                        : AppTheme.expenseColor.withOpacity(0.1),
+                color: actionColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                hasError
-                    ? Icons.error_outline_rounded
-                    : isIncome
-                        ? Icons.arrow_downward_rounded
-                        : Icons.arrow_upward_rounded,
-                color: hasError
-                    ? AppTheme.error
-                    : isIncome
-                        ? AppTheme.incomeColor
-                        : AppTheme.expenseColor,
-                size: 20,
-              ),
+              child: Icon(actionIcon, color: actionColor, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -797,7 +831,10 @@ class _TransactionListItem extends StatelessWidget {
                 if (hasError)
                   Container(
                     margin: const EdgeInsets.only(top: 2),
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.error.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
@@ -805,8 +842,11 @@ class _TransactionListItem extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.error_outline_rounded,
-                            size: 9, color: AppTheme.error),
+                        Icon(
+                          Icons.error_outline_rounded,
+                          size: 9,
+                          color: AppTheme.error,
+                        ),
                         const SizedBox(width: 2),
                         Text(
                           'error',
@@ -822,7 +862,10 @@ class _TransactionListItem extends StatelessWidget {
                 else if (transaction.isPending)
                   Container(
                     margin: const EdgeInsets.only(top: 2),
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF3C7),
                       borderRadius: BorderRadius.circular(4),
