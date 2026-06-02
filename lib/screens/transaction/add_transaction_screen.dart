@@ -10,6 +10,7 @@ import '../../core/utils/formatters.dart';
 import '../../models/transaction_category.dart';
 import '../../models/wallet.dart';
 import '../../providers/sync_provider.dart';
+import '../../providers/transaction_category_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/wallet_provider.dart';
 
@@ -342,9 +343,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   Widget _buildCategoryDropdown() {
-    return Consumer<TransactionProvider>(
-      builder: (context, txProvider, _) {
-        final categories = txProvider.getCategoriesByAction(_selectedAction);
+    return Consumer<TransactionCategoryProvider>(
+      builder: (context, catProvider, _) {
+        final categories = catProvider.categories
+            .where((c) => c.transactionType?.action == _selectedAction)
+            .toList();
         return DropdownButtonFormField<TransactionCategoryModel>(
           initialValue: _selectedCategory,
           decoration: const InputDecoration(

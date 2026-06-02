@@ -249,11 +249,6 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<TransactionCategoryModel> getCategoriesByAction(String action) {
-    return _categories
-        .where((c) => c.transactionType?.action == action)
-        .toList();
-  }
 
   /// Filter transactions in-memory from already-loaded SQLite data.
   /// All parameters are optional — passing null means "no filter for this field".
