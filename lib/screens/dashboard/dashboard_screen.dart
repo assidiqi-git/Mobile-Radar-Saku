@@ -9,8 +9,10 @@ import '../../core/utils/formatters.dart';
 import '../../models/transaction.dart';
 import '../../models/wallet.dart';
 import '../../providers/sync_provider.dart';
+import '../../providers/transaction_category_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/wallet_provider.dart';
+import '../settings/transaction_category_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -53,6 +55,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               SliverToBoxAdapter(child: _buildHeader()),
               // Hero Balance Card
               SliverToBoxAdapter(child: _buildBalanceCard()),
+              // Empty Category Banner
+              SliverToBoxAdapter(child: _buildEmptyCategoryBanner()),
               // Wallets Horizontal Scroll
               SliverToBoxAdapter(child: _buildWalletsSection()),
               // Pending Sync Banner
@@ -355,6 +359,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     : const Text('Sinkron'),
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyCategoryBanner() {
+    return Consumer<TransactionCategoryProvider>(
+      builder: (context, catProvider, _) {
+        if (catProvider.isLoading || catProvider.categories.isNotEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.errorContainer.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: AppTheme.error,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Belum Ada Kategori',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppTheme.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Anda belum memiliki kategori transaksi. Tambahkan kategori pada halaman profile.',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TransactionCategoryListScreen(),
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.error,
+                      foregroundColor: AppTheme.onError,
+                      elevation: 0,
+                    ),
+                    child: const Text('Buat Kategori'),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
