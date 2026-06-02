@@ -373,7 +373,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
