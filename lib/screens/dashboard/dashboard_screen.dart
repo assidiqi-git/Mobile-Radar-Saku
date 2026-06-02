@@ -35,10 +35,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadData() async {
     final wallet = context.read<WalletProvider>();
     final tx = context.read<TransactionProvider>();
+    final catProvider = context.read<TransactionCategoryProvider>();
+
     await Future.wait([wallet.loadFromLocal(), tx.loadAll()]);
+    
     // If no local data, fetch from server
     if (wallet.wallets.isEmpty) await wallet.fetchFromServer();
-    if (tx.categories.isEmpty) await tx.fetchCategoriesFromServer();
+    
+    bool justSynced = false;
+    if (tx.categories.isEmpty) {
+      await tx.fetchCategoriesFromServer();
+      justSynced = true;
+    }
+
+    // Refresh CategoryProvider so the banner updates correctly after sync
+    if (justSynced || catProvider.categories.isEmpty) {
+      await catProvider.loadAll();
+    }
   }
 
   @override
