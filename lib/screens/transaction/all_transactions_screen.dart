@@ -39,9 +39,9 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
       initialDateRange: _dateRange,
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: Theme.of(ctx).colorScheme.copyWith(
-                primary: AppTheme.primary,
-              ),
+          colorScheme: Theme.of(
+            ctx,
+          ).colorScheme.copyWith(primary: AppTheme.primary),
         ),
         child: child!,
       ),
@@ -65,6 +65,16 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
             Expanded(child: _buildTransactionList()),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.pushNamed(context, AppRouter.addTransaction),
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        // shape: RoundedRectangleBorder(
+        //   borderRadius: BorderRadius.circular(16),
+        // ),
+        child: const Icon(Icons.add_rounded, size: 28),
       ),
     );
   }
@@ -98,7 +108,9 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
               IconButton(
                 icon: Icon(
                   Icons.date_range_rounded,
-                  color: _dateRange != null ? AppTheme.primary : AppTheme.outline,
+                  color: _dateRange != null
+                      ? AppTheme.primary
+                      : AppTheme.outline,
                 ),
                 onPressed: _pickDateRange,
                 tooltip: 'Pilih rentang tanggal',
@@ -134,10 +146,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
         onChanged: (v) => setState(() => _searchText = v),
         decoration: InputDecoration(
           hintText: 'Cari nama atau catatan...',
-          hintStyle: GoogleFonts.inter(
-            fontSize: 14,
-            color: AppTheme.outline,
-          ),
+          hintStyle: GoogleFonts.inter(fontSize: 14, color: AppTheme.outline),
           prefixIcon: const Icon(Icons.search_rounded, size: 20),
           suffixIcon: _searchText.isNotEmpty
               ? IconButton(
@@ -162,8 +171,10 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
             borderRadius: BorderRadius.circular(28),
             borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 10,
+          ),
           isDense: true,
         ),
         style: GoogleFonts.inter(fontSize: 14, color: AppTheme.onSurface),
@@ -199,10 +210,12 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   icon: Icons.arrow_downward_rounded,
                   iconColor: AppTheme.incomeColor,
                   isSelected: _selectedAction == AppConstants.actionAddition,
-                  onTap: () => setState(() => _selectedAction =
-                      _selectedAction == AppConstants.actionAddition
-                          ? null
-                          : AppConstants.actionAddition),
+                  onTap: () => setState(
+                    () => _selectedAction =
+                        _selectedAction == AppConstants.actionAddition
+                        ? null
+                        : AppConstants.actionAddition,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 _ActionChip(
@@ -210,10 +223,12 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   icon: Icons.arrow_upward_rounded,
                   iconColor: AppTheme.expenseColor,
                   isSelected: _selectedAction == AppConstants.actionDeduction,
-                  onTap: () => setState(() => _selectedAction =
-                      _selectedAction == AppConstants.actionDeduction
-                          ? null
-                          : AppConstants.actionDeduction),
+                  onTap: () => setState(
+                    () => _selectedAction =
+                        _selectedAction == AppConstants.actionDeduction
+                        ? null
+                        : AppConstants.actionDeduction,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 _ActionChip(
@@ -221,10 +236,12 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   icon: Icons.remove_rounded,
                   iconColor: AppTheme.secondary,
                   isSelected: _selectedAction == AppConstants.actionNeutral,
-                  onTap: () => setState(() => _selectedAction =
-                      _selectedAction == AppConstants.actionNeutral
-                          ? null
-                          : AppConstants.actionNeutral),
+                  onTap: () => setState(
+                    () => _selectedAction =
+                        _selectedAction == AppConstants.actionNeutral
+                        ? null
+                        : AppConstants.actionNeutral,
+                  ),
                 ),
               ],
             ),
@@ -242,16 +259,21 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                     onTap: () => setState(() => _selectedWalletId = null),
                   ),
                   const SizedBox(width: 8),
-                  ...wallets.map((w) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _ActionChip(
-                          label: w.name,
-                          icon: Icons.account_balance_wallet_rounded,
-                          isSelected: _selectedWalletId == w.id,
-                          onTap: () => setState(() => _selectedWalletId =
-                              _selectedWalletId == w.id ? null : w.id),
+                  ...wallets.map(
+                    (w) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _ActionChip(
+                        label: w.name,
+                        icon: Icons.account_balance_wallet_rounded,
+                        isSelected: _selectedWalletId == w.id,
+                        onTap: () => setState(
+                          () => _selectedWalletId = _selectedWalletId == w.id
+                              ? null
+                              : w.id,
                         ),
-                      )),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -273,8 +295,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: [
-          Icon(Icons.calendar_today_rounded,
-              size: 13, color: AppTheme.primary),
+          Icon(Icons.calendar_today_rounded, size: 13, color: AppTheme.primary),
           const SizedBox(width: 6),
           Text(
             '$start – $end',
@@ -334,7 +355,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           itemCount: groupedItems.length,
           itemBuilder: (_, i) {
             final item = groupedItems[i];
-            
+
             if (item is String) {
               return Padding(
                 padding: const EdgeInsets.only(top: 16, bottom: 8),
@@ -349,7 +370,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                 ),
               );
             }
-            
+
             return _TransactionItem(transaction: item as TransactionModel);
           },
         );
@@ -360,7 +381,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   // ── Empty State ────────────────────────────────────────────────────────────
 
   Widget _buildEmptyState() {
-    final hasFilters = _searchText.isNotEmpty ||
+    final hasFilters =
+        _searchText.isNotEmpty ||
         _selectedAction != null ||
         _selectedWalletId != null ||
         _dateRange != null;
@@ -415,9 +437,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                 }),
                 icon: const Icon(Icons.filter_alt_off_rounded, size: 16),
                 label: const Text('Hapus semua filter'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.primary,
-                ),
+                style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
               ),
             ],
           ],
@@ -452,7 +472,9 @@ class _ActionChip extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primary : AppTheme.surfaceContainerLowest,
+          color: isSelected
+              ? AppTheme.primary
+              : AppTheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
@@ -477,8 +499,7 @@ class _ActionChip extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 fontSize: 12,
-                fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
               ),
             ),
@@ -505,16 +526,20 @@ class _TransactionItem extends StatelessWidget {
     final Color actionColor = isIncome
         ? AppTheme.incomeColor
         : isExpense
-            ? AppTheme.expenseColor
-            : AppTheme.onSurfaceVariant;
+        ? AppTheme.expenseColor
+        : AppTheme.onSurfaceVariant;
 
     final IconData actionIcon = isIncome
         ? Icons.arrow_downward_rounded
         : isExpense
-            ? Icons.arrow_upward_rounded
-            : Icons.swap_horiz_rounded;
+        ? Icons.arrow_upward_rounded
+        : Icons.swap_horiz_rounded;
 
-    final String prefix = isIncome ? '+' : isExpense ? '-' : '~';
+    final String prefix = isIncome
+        ? '+'
+        : isExpense
+        ? '-'
+        : '~';
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -536,95 +561,95 @@ class _TransactionItem extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-          // Icon
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: actionColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(actionIcon, color: actionColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          // Name + subtitle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  transaction.name,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.onSurface,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              // Icon
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: actionColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 2),
-                Row(
+                child: Icon(actionIcon, color: actionColor, size: 20),
+              ),
+              const SizedBox(width: 12),
+              // Name + subtitle
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (transaction.transactionCategory != null) ...[
-                      Text(
-                        transaction.transactionCategory!.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: AppTheme.outline,
-                        ),
+                    Text(
+                      transaction.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.onSurface,
                       ),
-                      Text(
-                        ' · ${DateFormatter.relativeTime(DateTime.tryParse(transaction.createdAt ?? ''))}',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: AppTheme.outline,
-                        ),
-                      ),
-                    ] else ...[
-                      Text(
-                        DateFormatter.relativeTime(
-                          DateTime.tryParse(transaction.createdAt ?? ''),
-                        ),
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: AppTheme.outline,
-                        ),
-                      ),
-                    ],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        if (transaction.transactionCategory != null) ...[
+                          Text(
+                            transaction.transactionCategory!.name,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: AppTheme.outline,
+                            ),
+                          ),
+                          Text(
+                            ' · ${DateFormatter.relativeTime(DateTime.tryParse(transaction.createdAt ?? ''))}',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: AppTheme.outline,
+                            ),
+                          ),
+                        ] else ...[
+                          Text(
+                            DateFormatter.relativeTime(
+                              DateTime.tryParse(transaction.createdAt ?? ''),
+                            ),
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: AppTheme.outline,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Amount + date
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '$prefix${CurrencyFormatter.format(transaction.amount)}',
-                style: AppTheme.monoStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: actionColor,
-                ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                DateFormatter.displayDate(
-                  DateTime.tryParse(transaction.createdAt ?? ''),
-                ),
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: AppTheme.outline,
-                ),
+              const SizedBox(width: 8),
+              // Amount + date
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$prefix${CurrencyFormatter.format(transaction.amount)}',
+                    style: AppTheme.monoStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: actionColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormatter.displayDate(
+                      DateTime.tryParse(transaction.createdAt ?? ''),
+                    ),
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: AppTheme.outline,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
-    ),
-  ),
-);
+    );
   }
 }
