@@ -38,10 +38,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final catProvider = context.read<TransactionCategoryProvider>();
 
     await Future.wait([wallet.loadFromLocal(), tx.loadAll()]);
-    
+
     // If no local data, fetch from server
     if (wallet.wallets.isEmpty) await wallet.fetchFromServer();
-    
+
     bool justSynced = false;
     if (tx.categories.isEmpty) {
       await tx.fetchCategoriesFromServer();
