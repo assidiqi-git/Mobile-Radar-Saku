@@ -7,6 +7,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/transaction.dart';
+import '../../providers/transaction_category_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/wallet_provider.dart';
 
@@ -23,7 +24,18 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   String _searchText = '';
   String? _selectedAction; // null = semua, 'addition', 'deduction', 'neutral'
   String? _selectedWalletId;
+  String? _selectedCategoryId;
   DateTimeRange? _dateRange;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<TransactionCategoryProvider>().loadAll();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -211,10 +223,13 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   iconColor: AppTheme.incomeColor,
                   isSelected: _selectedAction == AppConstants.actionAddition,
                   onTap: () => setState(
-                    () => _selectedAction =
-                        _selectedAction == AppConstants.actionAddition
-                        ? null
-                        : AppConstants.actionAddition,
+                    () {
+                      _selectedAction =
+                          _selectedAction == AppConstants.actionAddition
+                          ? null
+                          : AppConstants.actionAddition;
+                      _selectedCategoryId = null; // reset category on action change
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -224,10 +239,13 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   iconColor: AppTheme.expenseColor,
                   isSelected: _selectedAction == AppConstants.actionDeduction,
                   onTap: () => setState(
-                    () => _selectedAction =
-                        _selectedAction == AppConstants.actionDeduction
-                        ? null
-                        : AppConstants.actionDeduction,
+                    () {
+                      _selectedAction =
+                          _selectedAction == AppConstants.actionDeduction
+                          ? null
+                          : AppConstants.actionDeduction;
+                      _selectedCategoryId = null; // reset category on action change
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -237,10 +255,13 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   iconColor: AppTheme.secondary,
                   isSelected: _selectedAction == AppConstants.actionNeutral,
                   onTap: () => setState(
-                    () => _selectedAction =
-                        _selectedAction == AppConstants.actionNeutral
-                        ? null
-                        : AppConstants.actionNeutral,
+                    () {
+                      _selectedAction =
+                          _selectedAction == AppConstants.actionNeutral
+                          ? null
+                          : AppConstants.actionNeutral;
+                      _selectedCategoryId = null; // reset category on action change
+                    },
                   ),
                 ),
               ],
@@ -277,8 +298,51 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                 ],
               ),
             ),
-          if (wallets.isEmpty)
-            const SizedBox(height: 6), // padding bawah jika dompet kosong
+          // 3. Baris Kategori (jika ada)
+          if (wallets.isNotEmpty) const SizedBox(height: 4),
+          Consumer<TransactionCategoryProvider>(
+            builder: (context, catProvider, _) {
+              final allCategories = catProvider.categories;
+              final filteredCategories = _selectedAction == null
+                  ? allCategories
+                  : allCategories
+                      .where((c) => c.transactionType?.action == _selectedAction)
+                      .toList();
+
+              if (filteredCategories.isEmpty) {
+                return const SizedBox(height: 6);
+              }
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: Row(
+                  children: [
+                    _ActionChip(
+                      label: 'Semua Kategori',
+                      isSelected: _selectedCategoryId == null,
+                      onTap: () => setState(() => _selectedCategoryId = null),
+                    ),
+                    const SizedBox(width: 8),
+                    ...filteredCategories.map(
+                      (c) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _ActionChip(
+                          label: c.name,
+                          icon: Icons.category_rounded,
+                          isSelected: _selectedCategoryId == c.id,
+                          onTap: () => setState(
+                            () => _selectedCategoryId =
+                                _selectedCategoryId == c.id ? null : c.id,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -324,6 +388,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           searchText: _searchText.isEmpty ? null : _searchText,
           walletId: _selectedWalletId,
           categoryAction: _selectedAction,
+          categoryId: _selectedCategoryId,
           startDate: _dateRange?.start,
           endDate: _dateRange?.end,
         );
@@ -385,6 +450,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
         _searchText.isNotEmpty ||
         _selectedAction != null ||
         _selectedWalletId != null ||
+        _selectedCategoryId != null ||
         _dateRange != null;
 
     return Center(
@@ -433,6 +499,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   _searchController.clear();
                   _selectedAction = null;
                   _selectedWalletId = null;
+                  _selectedCategoryId = null;
                   _dateRange = null;
                 }),
                 icon: const Icon(Icons.filter_alt_off_rounded, size: 16),

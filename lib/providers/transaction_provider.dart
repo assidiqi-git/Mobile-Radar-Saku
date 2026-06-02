@@ -256,6 +256,7 @@ class TransactionProvider extends ChangeNotifier {
     String? searchText,
     String? walletId,
     String? categoryAction,
+    String? categoryId,
     DateTime? startDate,
     DateTime? endDate,
   }) {
@@ -279,7 +280,12 @@ class TransactionProvider extends ChangeNotifier {
         if (action != categoryAction) return false;
       }
 
-      // 4. Date range filter
+      // 4. Category ID filter
+      if (categoryId != null && categoryId.isNotEmpty) {
+        if (t.transactionCategoryId != categoryId) return false;
+      }
+
+      // 5. Date range filter
       if (startDate != null || endDate != null) {
         final txDate = DateTime.tryParse(t.createdAt ?? '');
         if (txDate == null) return false;
