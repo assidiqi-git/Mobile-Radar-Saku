@@ -8,7 +8,9 @@ import 'core/theme/app_theme.dart';
 import 'database/database_helper.dart';
 import 'providers/auth_provider.dart';
 import 'providers/sync_provider.dart';
+import 'providers/transaction_category_provider.dart';
 import 'providers/transaction_provider.dart';
+import 'providers/transaction_type_provider.dart';
 import 'providers/wallet_provider.dart';
 
 Future<void> main() async {
@@ -41,6 +43,14 @@ class RadarSakuApp extends StatelessWidget {
         ChangeNotifierProxyProvider<AuthProvider, TransactionProvider>(
           create: (_) => TransactionProvider(),
           update: (_, auth, tx) => tx!..updateAuth(auth),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, TransactionTypeProvider>(
+          create: (_) => TransactionTypeProvider(),
+          update: (_, auth, p) => p!..updateAuth(auth),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, TransactionCategoryProvider>(
+          create: (_) => TransactionCategoryProvider(),
+          update: (_, auth, p) => p!..updateAuth(auth),
         ),
         ChangeNotifierProxyProvider<AuthProvider, SyncProvider>(
           create: (_) => SyncProvider(),

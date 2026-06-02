@@ -235,6 +235,49 @@ class ApiService {
     );
   }
 
+  /// POST /transaction-types
+  Future<TransactionTypeModel> storeTransactionType({
+    required String name,
+    required String action,
+    String? description,
+  }) async {
+    final body = <String, dynamic>{'name': name, 'action': action};
+    if (description != null) body['description'] = description;
+    final response = await http.post(
+      _uri('/transaction-types'),
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    final data = await _handleResponse(response);
+    return TransactionTypeModel.fromJson(data['data'] as Map<String, dynamic>);
+  }
+
+  /// PUT /transaction-types/{id}
+  Future<TransactionTypeModel> updateTransactionType(
+    String id, {
+    String? name,
+    String? action,
+    String? description,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (action != null) body['action'] = action;
+    if (description != null) body['description'] = description;
+    final response = await http.put(
+      _uri('/transaction-types/$id'),
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    final data = await _handleResponse(response);
+    return TransactionTypeModel.fromJson(data['data'] as Map<String, dynamic>);
+  }
+
+  /// DELETE /transaction-types/{id}
+  Future<void> deleteTransactionType(String id) async {
+    final response = await http.delete(_uri('/transaction-types/$id'), headers: _headers);
+    await _handleResponse(response);
+  }
+
   // ---- Transaction Categories ----
 
   /// GET /transaction-categories — fetches all pages
@@ -243,6 +286,52 @@ class ApiService {
       '/transaction-categories',
       (e) => TransactionCategoryModel.fromJson(e as Map<String, dynamic>),
     );
+  }
+
+  /// POST /transaction-categories
+  Future<TransactionCategoryModel> storeTransactionCategory({
+    required String transactionTypeId,
+    required String name,
+    String? description,
+  }) async {
+    final body = <String, dynamic>{
+      'transaction_type_id': transactionTypeId,
+      'name': name,
+    };
+    if (description != null) body['description'] = description;
+    final response = await http.post(
+      _uri('/transaction-categories'),
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    final data = await _handleResponse(response);
+    return TransactionCategoryModel.fromJson(data['data'] as Map<String, dynamic>);
+  }
+
+  /// PUT /transaction-categories/{id}
+  Future<TransactionCategoryModel> updateTransactionCategory(
+    String id, {
+    String? transactionTypeId,
+    String? name,
+    String? description,
+  }) async {
+    final body = <String, dynamic>{};
+    if (transactionTypeId != null) body['transaction_type_id'] = transactionTypeId;
+    if (name != null) body['name'] = name;
+    if (description != null) body['description'] = description;
+    final response = await http.put(
+      _uri('/transaction-categories/$id'),
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    final data = await _handleResponse(response);
+    return TransactionCategoryModel.fromJson(data['data'] as Map<String, dynamic>);
+  }
+
+  /// DELETE /transaction-categories/{id}
+  Future<void> deleteTransactionCategory(String id) async {
+    final response = await http.delete(_uri('/transaction-categories/$id'), headers: _headers);
+    await _handleResponse(response);
   }
 
   /// Generic paginated fetcher — follows `meta.last_page` cursor.

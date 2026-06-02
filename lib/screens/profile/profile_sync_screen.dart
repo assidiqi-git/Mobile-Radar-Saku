@@ -7,6 +7,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/sync_provider.dart';
+import '../settings/transaction_category_list_screen.dart';
+import '../settings/transaction_type_list_screen.dart';
 
 class ProfileSyncScreen extends StatelessWidget {
   const ProfileSyncScreen({super.key});
@@ -24,6 +26,8 @@ class ProfileSyncScreen extends StatelessWidget {
             _buildProfileCard(context),
             const SizedBox(height: 20),
             _buildSyncCard(context),
+            const SizedBox(height: 20),
+            _buildSettingsMenuCard(context),
             const SizedBox(height: 20),
             _buildAppInfoCard(),
             const SizedBox(height: 32),
@@ -255,6 +259,118 @@ class ProfileSyncScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSettingsMenuCard(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+            child: Text(
+              'Pengaturan',
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.onSurfaceVariant,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          _buildMenuTile(
+            context,
+            icon: Icons.category_rounded,
+            iconColor: AppTheme.secondary,
+            iconBgColor: AppTheme.secondary.withOpacity(0.1),
+            label: 'Manajemen Tipe Transaksi',
+            subtitle: 'Pemasukan, pengeluaran, dll.',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const TransactionTypeListScreen(),
+              ),
+            ),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _buildMenuTile(
+            context,
+            icon: Icons.folder_special_rounded,
+            iconColor: AppTheme.primary,
+            iconBgColor: AppTheme.primary.withOpacity(0.1),
+            label: 'Manajemen Kategori Transaksi',
+            subtitle: 'Makan, belanja, gaji, dll.',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const TransactionCategoryListScreen(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuTile(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required String label,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: iconColor),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppTheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded,
+                size: 20, color: AppTheme.outline),
+          ],
+        ),
+      ),
     );
   }
 

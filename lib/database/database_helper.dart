@@ -8,7 +8,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
 
   static Database? _database;
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 3;
   static const String _dbName = 'radar_saku.db';
 
   Future<Database> get database async {
@@ -61,8 +61,11 @@ class DatabaseHelper {
         name TEXT NOT NULL,
         action TEXT NOT NULL,
         description TEXT,
+        sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}',
+        sync_error_message TEXT,
         created_at TEXT,
-        updated_at TEXT
+        updated_at TEXT,
+        deleted_at TEXT
       )
     ''');
 
@@ -72,8 +75,11 @@ class DatabaseHelper {
         transaction_type_id TEXT NOT NULL,
         name TEXT NOT NULL,
         description TEXT,
+        sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusPending}',
+        sync_error_message TEXT,
         created_at TEXT,
         updated_at TEXT,
+        deleted_at TEXT,
         FOREIGN KEY (transaction_type_id)
           REFERENCES ${AppConstants.tableTransactionTypes}(id)
           ON DELETE CASCADE
@@ -171,6 +177,22 @@ class DatabaseHelper {
       } catch (_) {
         // Ignore if columns already exist
       }
+    }
+
+    if (oldVersion < 3) {
+      // Migrate transaction_types: add sync_status, sync_error_message, deleted_at
+      try {
+        await db.execute("ALTER TABLE ${AppConstants.tableTransactionTypes} ADD COLUMN sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusSynced}'");
+        await db.execute("ALTER TABLE ${AppConstants.tableTransactionTypes} ADD COLUMN sync_error_message TEXT");
+        await db.execute("ALTER TABLE ${AppConstants.tableTransactionTypes} ADD COLUMN deleted_at TEXT");
+      } catch (_) {}
+      
+      // Migrate transaction_categories: add sync_status, sync_error_message, deleted_at
+      try {
+        await db.execute("ALTER TABLE ${AppConstants.tableTransactionCategories} ADD COLUMN sync_status TEXT NOT NULL DEFAULT '${AppConstants.syncStatusSynced}'");
+        await db.execute("ALTER TABLE ${AppConstants.tableTransactionCategories} ADD COLUMN sync_error_message TEXT");
+        await db.execute("ALTER TABLE ${AppConstants.tableTransactionCategories} ADD COLUMN deleted_at TEXT");
+      } catch (_) {}
     }
   }
 
