@@ -63,6 +63,8 @@ class ApiService {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       AppConstants.clientTypeHeader: AppConstants.clientTypeMobile,
+      // Skip ngrok browser warning page (required for ngrok free-tier tunnels)
+      'ngrok-skip-browser-warning': 'true',
     };
     if (_token != null && _token!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $_token';
@@ -80,7 +82,27 @@ class ApiService {
 
   Future<Map<String, dynamic>> _handleResponse(http.Response response) async {
     final body = response.body.isEmpty ? '{}' : response.body;
-    final Map<String, dynamic> json = jsonDecode(body) as Map<String, dynamic>;
+
+    // Guard against non-JSON responses (e.g. ngrok HTML interstitial pages)
+    final contentType = response.headers['content-type'] ?? '';
+    if (!contentType.contains('application/json') && body.trimLeft().startsWith('<')) {
+      throw ApiException(
+        statusCode: response.statusCode,
+        message:
+            'Server mengembalikan respons non-JSON (status ${response.statusCode}). '
+            'Pastikan URL API sudah benar dan server aktif.',
+      );
+    }
+
+    late final Map<String, dynamic> json;
+    try {
+      json = jsonDecode(body) as Map<String, dynamic>;
+    } catch (_) {
+      throw ApiException(
+        statusCode: response.statusCode,
+        message: 'Respons server tidak valid (bukan JSON).',
+      );
+    }
 
     switch (response.statusCode) {
       case 200:
@@ -152,13 +174,12 @@ class ApiService {
 
   // ---- Wallets ----
 
-  /// GET /wallets
+  /// GET /wallets — fetches all pages
   Future<List<WalletModel>> getWallets() async {
-    final response = await http.get(_uri('/wallets'), headers: _headers);
-    final data = await _handleResponse(response);
-    final list = data['data'];
-    if (list is! List) return [];
-    return list.map((e) => WalletModel.fromJson(e as Map<String, dynamic>)).toList();
+    return _fetchAllPages(
+      '/wallets',
+      (e) => WalletModel.fromJson(e as Map<String, dynamic>),
+    );
   }
 
   /// POST /wallets
@@ -206,31 +227,58 @@ class ApiService {
 
   // ---- Transaction Types ----
 
-  /// GET /transaction-types (all pages)
+  /// GET /transaction-types — fetches all pages
   Future<List<TransactionTypeModel>> getTransactionTypes() async {
-    final response =
-        await http.get(_uri('/transaction-types'), headers: _headers);
-    final data = await _handleResponse(response);
-    final list = data['data'];
-    if (list is! List) return [];
-    return list
-        .map((e) => TransactionTypeModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return _fetchAllPages(
+      '/transaction-types',
+      (e) => TransactionTypeModel.fromJson(e as Map<String, dynamic>),
+    );
   }
 
   // ---- Transaction Categories ----
 
-  /// GET /transaction-categories
+  /// GET /transaction-categories — fetches all pages
   Future<List<TransactionCategoryModel>> getTransactionCategories() async {
-    final response =
-        await http.get(_uri('/transaction-categories'), headers: _headers);
-    final data = await _handleResponse(response);
-    final list = data['data'];
-    if (list is! List) return [];
-    return list
-        .map((e) =>
-            TransactionCategoryModel.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return _fetchAllPages(
+      '/transaction-categories',
+      (e) => TransactionCategoryModel.fromJson(e as Map<String, dynamic>),
+    );
+  }
+
+  /// Generic paginated fetcher — follows `meta.last_page` cursor.
+  Future<List<T>> _fetchAllPages<T>(
+    String path,
+    T Function(dynamic) mapper,
+  ) async {
+    final results = <T>[];
+    int page = 1;
+    int lastPage = 1;
+
+    do {
+      final response = await http.get(
+        _uri(path, {'page': '$page'}),
+        headers: _headers,
+      );
+      final data = await _handleResponse(response);
+
+      final list = data['data'];
+      if (list is List) {
+        results.addAll(list.map(mapper));
+      }
+
+      // Read pagination meta if present
+      final meta = data['meta'] as Map<String, dynamic>?;
+      if (meta != null) {
+        lastPage = (meta['last_page'] as int?) ?? 1;
+      } else {
+        // Non-paginated response — single page only
+        break;
+      }
+
+      page++;
+    } while (page <= lastPage);
+
+    return results;
   }
 
   // ---- Sync ----

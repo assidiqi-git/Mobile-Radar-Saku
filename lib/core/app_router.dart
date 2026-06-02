@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import '../screens/auth/sync_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile/profile_sync_screen.dart';
 import '../screens/transaction/add_transaction_screen.dart';
@@ -16,6 +17,7 @@ class AppRouter {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String initialSync = '/initial-sync';
   static const String dashboard = '/dashboard';
   static const String addTransaction = '/add-transaction';
   static const String allTransactions = '/all-transactions';
@@ -34,6 +36,8 @@ class AppRouter {
         return _slideRoute(const LoginScreen(), settings);
       case register:
         return _slideRoute(const RegisterScreen(), settings);
+      case initialSync:
+        return _fadeRoute(const SyncScreen(), settings);
       case dashboard:
         return _fadeRoute(const DashboardScreen(), settings);
       case addTransaction:

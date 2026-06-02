@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-      Navigator.pushReplacementNamed(context, AppRouter.dashboard);
+      Navigator.pushReplacementNamed(context, AppRouter.initialSync);
     } else {
       _showError(auth.errorMessage ?? 'Login gagal');
     }
