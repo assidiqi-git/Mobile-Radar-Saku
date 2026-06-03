@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp">
+
+    <!-- ===== STATE A: Logged Out (default initial state) ===== -->
+    <LinearLayout
+        android:id="@+id/layout_logged_out"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_background"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="20dp"
+        android:visibility="visible">
+
+        <!-- Wallet icon -->
+        <TextView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:text="💰"
+            android:textSize="28sp"
+            android:gravity="center" />
+
+        <!-- App title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Radar Saku"
+            android:textColor="#E2E8F0"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="4dp" />
+
+        <!-- Subtitle -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Silakan login untuk melihat\ndata keuangan Anda"
+            android:textColor="#94A3B8"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:layout_marginTop="8dp" />
+
+        <!-- Login Button -->
+        <TextView
+            android:id="@+id/btn_login"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  Login  "
+            android:textColor="#064E3B"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/widget_btn_background"
+            android:layout_marginTop="16dp"
+            android:padding="8dp" />
+    </LinearLayout>
+
+    <!-- ===== STATE B: Logged In ===== -->
+    <LinearLayout
+        android:id="@+id/layout_logged_in"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_background"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <!-- Header Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="💰 Radar Saku"
+                android:textColor="#E2E8F0"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Add Transaction Button (+) -->
+            <TextView
+                android:id="@+id/btn_add_transaction"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:text="+"
+                android:textColor="#064E3B"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:background="@drawable/widget_btn_background" />
+        </LinearLayout>
+
+        <!-- Divider: ImageView (officially supported RemoteViews view type) -->
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#1E3A5F"
+            android:layout_marginBottom="4dp"
+            android:scaleType="fitXY" />
+
+        <!-- Scrollable Transaction List -->
+        <ListView
+            android:id="@+id/list_transactions"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:scrollbars="none" />
+
+        <!-- Empty state (shown when list is empty) -->
+        <TextView
+            android:id="@+id/tv_no_transactions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Belum ada transaksi"
+            android:textColor="#64748B"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:padding="16dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+</FrameLayout>

@@ -7,6 +7,7 @@ import '../core/constants/app_constants.dart';
 import '../database/database_helper.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
+import '../services/widget_service.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
@@ -106,6 +107,8 @@ class AuthProvider extends ChangeNotifier {
     await ApiService.instance.logout();
     await _clearSession();
     await DatabaseHelper.instance.clearAllUserData();
+    // Clear home screen widget data saat logout
+    await WidgetService.clearWidget();
     _status = AuthStatus.unauthenticated;
     _user = null;
     _setLoading(false);

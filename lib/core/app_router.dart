@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
@@ -121,8 +122,32 @@ class _SplashGateState extends State<_SplashGate> {
 
     if (!mounted) return;
 
+    // Cek apakah app diluncurkan dari widget (Cold Start)
+    Uri? initialUri;
+    try {
+      initialUri = await HomeWidget.initiallyLaunchedFromHomeWidget();
+    } catch (e) {
+      // Abaikan jika error
+    }
+
+    if (initialUri != null) {
+      if (initialUri.host == 'login') {
+        Navigator.pushReplacementNamed(context, AppRouter.login);
+        return;
+      } else if (initialUri.host == 'add_transaction') {
+        if (auth.isAuthenticated) {
+          // Navigasi ke dashboard sebagai backstack, lalu buka add transaction
+          Navigator.pushReplacementNamed(context, AppRouter.dashboard);
+          Navigator.pushNamed(context, AppRouter.addTransaction);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRouter.login);
+        }
+        return;
+      }
+    }
+
+    // Default routing
     if (auth.isAuthenticated) {
-      // Trigger data loading
       Navigator.pushReplacementNamed(context, AppRouter.dashboard);
     } else {
       Navigator.pushReplacementNamed(context, AppRouter.login);

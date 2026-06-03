@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Background tombol Login dan tombol + di widget.
+     Warna emerald #064E3B sesuai AppTheme.primary -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#80BEA6" />
+    <corners android:radius="8dp" />
+</shape>

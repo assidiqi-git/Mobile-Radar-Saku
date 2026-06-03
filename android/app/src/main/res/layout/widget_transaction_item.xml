@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <!-- Color dot indicator (income=green / expense=red / neutral=gray) -->
+    <ImageView
+        android:id="@+id/iv_tx_icon"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:src="@drawable/ic_dot"
+        android:scaleType="fitCenter" />
+
+    <!-- Transaction name -->
+    <TextView
+        android:id="@+id/tv_tx_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textSize="11sp"
+        android:textColor="#CBD5E1"
+        android:paddingStart="8dp"
+        android:paddingEnd="4dp" />
+
+    <!-- Amount (colored based on type) -->
+    <TextView
+        android:id="@+id/tv_tx_amount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:textColor="#22C55E" />
+
+</LinearLayout>

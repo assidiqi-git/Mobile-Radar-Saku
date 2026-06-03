@@ -11,6 +11,7 @@ import '../models/wallet.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
 import '../services/sync_manager.dart';
+import '../services/widget_service.dart';
 
 class TransactionProvider extends ChangeNotifier {
   List<TransactionModel> _transactions = [];
@@ -18,6 +19,7 @@ class TransactionProvider extends ChangeNotifier {
   List<TransactionCategoryModel> _categories = [];
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isLoggedIn = false;
 
   List<TransactionModel> get transactions =>
       _transactions.where((t) => t.deletedAt == null).toList();
@@ -29,6 +31,7 @@ class TransactionProvider extends ChangeNotifier {
   List<TransactionModel> get recentTransactions => transactions.take(5).toList();
 
   void updateAuth(AuthProvider auth) {
+    _isLoggedIn = auth.isAuthenticated;
     if (auth.isAuthenticated) {
       loadAll();
     } else {
@@ -111,6 +114,11 @@ class TransactionProvider extends ChangeNotifier {
     }
     _isLoading = false;
     notifyListeners();
+
+    // Update home screen widget dengan data terbaru
+    if (_isLoggedIn) {
+      WidgetService.updateWidget(recentTransactions, true);
+    }
   }
 
   Future<void> loadCategories() async {
