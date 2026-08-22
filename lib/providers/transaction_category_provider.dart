@@ -24,7 +24,7 @@ class TransactionCategoryProvider extends ChangeNotifier {
   // ---- Auth lifecycle -------------------------------------------------------
 
   void updateAuth(AuthProvider auth) {
-    if (auth.isAuthenticated) {
+    if (auth.isAuthenticated || auth.isGuest) {
       Future.microtask(() => loadAll());
     } else {
       Future.microtask(() {

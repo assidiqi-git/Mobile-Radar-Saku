@@ -126,9 +126,9 @@ class AuthProvider extends ChangeNotifier {
     await _clearSession();
     if (!_isGuest) {
       await DatabaseHelper.instance.clearAllUserData();
-      // Clear home screen widget data saat logout
-      await WidgetService.clearWidget();
     }
+    // Selalu hapus home screen widget data saat logout (termasuk Guest)
+    await WidgetService.clearWidget();
     _isGuest = false;
     _status = AuthStatus.unauthenticated;
     _user = null;

@@ -31,8 +31,8 @@ class TransactionProvider extends ChangeNotifier {
   List<TransactionModel> get recentTransactions => transactions.take(5).toList();
 
   void updateAuth(AuthProvider auth) {
-    _isLoggedIn = auth.isAuthenticated;
-    if (auth.isAuthenticated) {
+    _isLoggedIn = auth.isAuthenticated || auth.isGuest;
+    if (_isLoggedIn) {
       Future.microtask(() => loadAll());
     } else {
       Future.microtask(() {

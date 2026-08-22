@@ -23,7 +23,7 @@ class WalletProvider extends ChangeNotifier {
       wallets.fold(0.0, (sum, w) => sum + w.balanceDouble);
 
   void updateAuth(AuthProvider auth) {
-    if (auth.isAuthenticated) {
+    if (auth.isAuthenticated || auth.isGuest) {
       Future.microtask(() => loadFromLocal());
     } else {
       Future.microtask(() {

@@ -50,7 +50,7 @@ class RadarSakuWidgetProvider : AppWidgetProvider() {
             Log.d(TAG, "updateWidget id=$appWidgetId")
             try {
                 // Baca data yang disimpan home_widget package (Dart side)
-                val prefs = context.getSharedPreferences("HomeWidgetPlugin", Context.MODE_PRIVATE)
+                val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
                 val isLoggedIn = prefs.getString("is_logged_in", "false") == "true"
                 Log.d(TAG, "isLoggedIn=$isLoggedIn")
 
