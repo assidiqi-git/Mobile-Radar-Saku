@@ -74,6 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -229,7 +230,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             : const Text('Masuk'),
                       ),
-                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
