@@ -154,8 +154,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   counterText: '', // hide counter, validation handles it
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty)
+                  if (v == null || v.trim().isEmpty) {
                     return 'Keterangan wajib diisi';
+                  }
                   if (v.trim().length > AppConstants.maxNameLength) {
                     return 'Keterangan maks ${AppConstants.maxNameLength} karakter';
                   }
