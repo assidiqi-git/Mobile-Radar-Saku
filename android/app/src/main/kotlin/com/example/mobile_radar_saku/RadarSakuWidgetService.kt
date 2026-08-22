@@ -48,7 +48,7 @@ private class RadarSakuWidgetFactory(
      * (setelah [AppWidgetManager.notifyAppWidgetViewDataChanged]).
      */
     override fun onDataSetChanged() {
-        val prefs = context.getSharedPreferences("HomeWidgetPlugin", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
         val json = prefs.getString("transactions_json", "[]") ?: "[]"
         transactions = parseTransactions(json)
     }

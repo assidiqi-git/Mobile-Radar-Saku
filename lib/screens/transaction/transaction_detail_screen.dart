@@ -9,6 +9,7 @@ import '../../providers/sync_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../services/sync_manager.dart';
+import '../../models/transaction.dart';
 
 class TransactionDetailScreen extends StatelessWidget {
   final String transactionId;
@@ -48,7 +49,7 @@ class TransactionDetailScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.error),
-            onPressed: () => _confirmDelete(context, tx, action),
+            onPressed: () => _confirmDelete(context, tx),
           ),
         ],
       ),
@@ -242,7 +243,7 @@ class TransactionDetailScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, tx, String action) {
+  void _confirmDelete(BuildContext context, TransactionModel tx) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -257,7 +258,7 @@ class TransactionDetailScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             onPressed: () async {
               Navigator.pop(ctx); // Tutup dialog
-              await _performDelete(context, tx, action);
+              await _performDelete(context, tx);
             },
             child: const Text('Hapus', style: TextStyle(color: Colors.white)),
           ),
@@ -266,16 +267,16 @@ class TransactionDetailScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _performDelete(BuildContext context, tx, String action) async {
+  Future<void> _performDelete(BuildContext context, TransactionModel tx) async {
     final walletProvider = context.read<WalletProvider>();
     final txProvider = context.read<TransactionProvider>();
     final syncProvider = context.read<SyncProvider>();
 
     // 1. Revert wallet balance
-    final amount = double.tryParse(tx.amount) ?? 0.0;
-    final delta = action == AppConstants.actionAddition
+    final amount = tx.amountDouble;
+    final delta = tx.isIncome
         ? -amount // if it was addition, we deduct to revert
-        : action == AppConstants.actionDeduction
+        : tx.isExpense
             ? amount // if it was deduction, we add to revert
             : 0.0;
             

@@ -31,14 +31,16 @@ class TransactionProvider extends ChangeNotifier {
   List<TransactionModel> get recentTransactions => transactions.take(5).toList();
 
   void updateAuth(AuthProvider auth) {
-    _isLoggedIn = auth.isAuthenticated;
-    if (auth.isAuthenticated) {
-      loadAll();
+    _isLoggedIn = auth.isAuthenticated || auth.isGuest;
+    if (_isLoggedIn) {
+      Future.microtask(() => loadAll());
     } else {
-      _transactions = [];
-      _transactionTypes = [];
-      _categories = [];
-      notifyListeners();
+      Future.microtask(() {
+        _transactions = [];
+        _transactionTypes = [];
+        _categories = [];
+        notifyListeners();
+      });
     }
   }
 

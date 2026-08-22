@@ -24,16 +24,20 @@ class SyncProvider extends ChangeNotifier {
   /// Called by [ChangeNotifierProxyProvider] whenever [AuthProvider] changes.
   void updateAuth(AuthProvider auth) {
     if (auth.isAuthenticated) {
-      refreshPendingCount();
-      _loadLastSyncedAt();
-      _initConnectivityService(auth);
+      Future.microtask(() {
+        refreshPendingCount();
+        _loadLastSyncedAt();
+        _initConnectivityService(auth);
+      });
     } else {
-      _pendingCount = 0;
-      _lastSyncedAt = null;
-      _status = SyncStatus.idle;
-      // Stop listening when logged out — no need to auto-sync unauthenticated
-      ConnectivityService.instance.dispose();
-      notifyListeners();
+      Future.microtask(() {
+        _pendingCount = 0;
+        _lastSyncedAt = null;
+        _status = SyncStatus.idle;
+        // Stop listening when logged out — no need to auto-sync unauthenticated
+        ConnectivityService.instance.dispose();
+        notifyListeners();
+      });
     }
   }
 

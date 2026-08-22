@@ -23,11 +23,13 @@ class TransactionTypeProvider extends ChangeNotifier {
   // ---- Auth lifecycle -------------------------------------------------------
 
   void updateAuth(AuthProvider auth) {
-    if (auth.isAuthenticated) {
-      loadAll();
+    if (auth.isAuthenticated || auth.isGuest) {
+      Future.microtask(() => loadAll());
     } else {
-      _types = [];
-      notifyListeners();
+      Future.microtask(() {
+        _types = [];
+        notifyListeners();
+      });
     }
   }
 

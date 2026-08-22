@@ -48,10 +48,12 @@
             android:id="@+id/btn_login"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="  Login  "
+            android:minWidth="100dp"
+            android:text="Login"
             android:textColor="#064E3B"
             android:textSize="12sp"
             android:textStyle="bold"
+            android:gravity="center"
             android:background="@drawable/widget_btn_background"
             android:layout_marginTop="16dp"
             android:padding="8dp" />

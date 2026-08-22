@@ -47,6 +47,19 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _loginAsGuest() async {
+    setState(() => _isLoading = true);
+    await context.read<AuthProvider>().loginAsGuest();
+    
+    // Yield to the event loop to prevent ConcurrentModificationError 
+    // in Flutter's PointerRouter if the async operations finish too fast.
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    Navigator.pushReplacementNamed(context, AppRouter.dashboard);
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -61,6 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -168,7 +182,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (v == null || v.trim().isEmpty) {
                             return 'Email wajib diisi';
                           }
-                          if (!v.contains('@')) return 'Format email tidak valid';
+                          if (!v.contains('@'))
+                            return 'Format email tidak valid';
                           return null;
                         },
                       ),
@@ -184,7 +199,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           prefixIcon: const Icon(Icons.lock_outline_rounded),
                           suffixIcon: IconButton(
                             onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_off_outlined
@@ -239,6 +255,29 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 32),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextButton.icon(
+            onPressed: _isLoading ? null : _loginAsGuest,
+            icon: Icon(
+              Icons.wifi_off_rounded,
+              size: 16,
+              color: AppTheme.onSurfaceVariant.withOpacity(0.7),
+            ),
+            label: Text(
+              'Lanjutkan tanpa akun (Mode Offline)',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppTheme.onSurfaceVariant.withOpacity(0.7),
+              ),
+            ),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(double.infinity, 40),
+            ),
           ),
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -130,28 +131,38 @@ class _SplashGateState extends State<_SplashGate> {
       // Abaikan jika error
     }
 
-    if (initialUri != null) {
-      if (initialUri.host == 'login') {
-        Navigator.pushReplacementNamed(context, AppRouter.login);
-        return;
-      } else if (initialUri.host == 'add_transaction') {
-        if (auth.isAuthenticated) {
-          // Navigasi ke dashboard sebagai backstack, lalu buka add transaction
-          Navigator.pushReplacementNamed(context, AppRouter.dashboard);
-          Navigator.pushNamed(context, AppRouter.addTransaction);
-        } else {
-          Navigator.pushReplacementNamed(context, AppRouter.login);
-        }
-        return;
-      }
-    }
+    if (!mounted) return;
 
-    // Default routing
-    if (auth.isAuthenticated) {
-      Navigator.pushReplacementNamed(context, AppRouter.dashboard);
-    } else {
-      Navigator.pushReplacementNamed(context, AppRouter.login);
-    }
+    // Defer all navigation to the next frame so that all Future.microtask()
+    // calls from ChangeNotifierProxyProvider.updateAuth() finish settling
+    // the widget tree before we tear down the SplashGate. This prevents
+    // the race condition where microtasks call notifyListeners() on providers
+    // whose widgets are already being disposed by an early Navigator call.
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (initialUri != null) {
+        if (initialUri.host == 'login') {
+          Navigator.pushReplacementNamed(context, AppRouter.login);
+          return;
+        } else if (initialUri.host == 'add_transaction') {
+          if (auth.isAuthenticated) {
+            Navigator.pushReplacementNamed(context, AppRouter.dashboard);
+            Navigator.pushNamed(context, AppRouter.addTransaction);
+          } else {
+            Navigator.pushReplacementNamed(context, AppRouter.login);
+          }
+          return;
+        }
+      }
+
+      // Default routing
+      if (auth.isAuthenticated || auth.isGuest) {
+        Navigator.pushReplacementNamed(context, AppRouter.dashboard);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRouter.login);
+      }
+    });
   }
 
   @override

@@ -23,11 +23,13 @@ class WalletProvider extends ChangeNotifier {
       wallets.fold(0.0, (sum, w) => sum + w.balanceDouble);
 
   void updateAuth(AuthProvider auth) {
-    if (auth.isAuthenticated) {
-      loadFromLocal();
+    if (auth.isAuthenticated || auth.isGuest) {
+      Future.microtask(() => loadFromLocal());
     } else {
-      _wallets = [];
-      notifyListeners();
+      Future.microtask(() {
+        _wallets = [];
+        notifyListeners();
+      });
     }
   }
 
