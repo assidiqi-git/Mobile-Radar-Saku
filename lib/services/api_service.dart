@@ -138,6 +138,14 @@ class ApiService {
   }
 
   Uri _uri(String path, [Map<String, String>? queryParams]) {
+    // Fast-fail in Guest mode (or when unauthenticated) to prevent hanging network calls.
+    if ((_token == null || _token!.isEmpty) &&
+        !path.startsWith('/login') &&
+        !path.startsWith('/register') &&
+        !path.startsWith('/logout')) {
+      throw const AuthException();
+    }
+
     final base = Uri.parse('$_baseUrl$path');
     if (queryParams != null && queryParams.isNotEmpty) {
       return base.replace(queryParameters: queryParams);
@@ -224,7 +232,7 @@ class ApiService {
   /// POST /logout
   Future<void> logout() async {
     try {
-      await http.post(_uri('/logout'), headers: _headers);
+      await http.post(_uri('/logout'), headers: _headers).timeout(const Duration(seconds: 3));
     } catch (_) {
       // Ignore errors on logout
     }
