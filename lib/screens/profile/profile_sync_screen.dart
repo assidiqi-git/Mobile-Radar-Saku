@@ -792,12 +792,6 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
             label: 'Mode Penyimpanan',
             value: 'Offline-First (SQLite)',
           ),
-          const Divider(height: 20),
-          _buildSettingRow(
-            icon: Icons.cloud_rounded,
-            label: 'Status Server',
-            value: 'Laravel REST API',
-          ),
         ],
       ),
     );

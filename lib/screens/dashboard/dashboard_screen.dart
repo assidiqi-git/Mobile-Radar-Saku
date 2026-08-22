@@ -335,6 +335,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildSyncBanner() {
+    final isGuest = context.read<AuthProvider>().isGuest;
+    if (isGuest) return const SizedBox.shrink();
+
     return Consumer<SyncProvider>(
       builder: (_, sync, __) {
         if (!sync.hasPending) return const SizedBox.shrink();
