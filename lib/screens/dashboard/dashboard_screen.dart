@@ -786,12 +786,10 @@ class _TransactionListItem extends StatelessWidget {
               final txProvider = context.read<TransactionProvider>();
               final walletProvider = context.read<WalletProvider>();
               // Reverse wallet balance mutation
-              final action =
-                  transaction.transactionCategory?.transactionType?.action;
               final amount = transaction.amountDouble;
-              final delta = action == AppConstants.actionAddition
+              final delta = transaction.isIncome
                   ? -amount
-                  : action == AppConstants.actionDeduction
+                  : transaction.isExpense
                   ? amount
                   : 0.0;
               if (delta != 0 && transaction.walletId.isNotEmpty) {
