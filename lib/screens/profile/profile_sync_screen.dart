@@ -61,11 +61,11 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
             const SizedBox(height: 20),
             _buildSyncCard(context),
             const SizedBox(height: 20),
+            _buildSettingsMenuCard(context),
+            const SizedBox(height: 20),
             _buildServerUrlCard(context),
             const SizedBox(height: 20),
             _buildBackupRestoreCard(context),
-            const SizedBox(height: 20),
-            _buildSettingsMenuCard(context),
             const SizedBox(height: 20),
             _buildAppInfoCard(),
             const SizedBox(height: 32),
@@ -184,7 +184,7 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
                     ),
                   ),
                   Text(
-                    'Mode Offline aktif — data tidak dikirim ke server',
+                    'Mode Offline aktif — data disimpan lokal',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       color: AppTheme.onSurfaceVariant,
