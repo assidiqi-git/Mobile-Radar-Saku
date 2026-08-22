@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/transaction.dart';
 import '../../models/wallet.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/sync_provider.dart';
 import '../../providers/transaction_category_provider.dart';
 import '../../providers/transaction_provider.dart';
@@ -36,8 +37,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final wallet = context.read<WalletProvider>();
     final tx = context.read<TransactionProvider>();
     final catProvider = context.read<TransactionCategoryProvider>();
+    final isGuest = context.read<AuthProvider>().isGuest;
 
+    // Load local data first (always safe, no network)
     await Future.wait([wallet.loadFromLocal(), tx.loadAll()]);
+
+    // Guest mode: skip all network calls — no token available
+    if (isGuest) {
+      await catProvider.loadAll();
+      return;
+    }
 
     // If no local data, fetch from server
     if (wallet.wallets.isEmpty) await wallet.fetchFromServer();

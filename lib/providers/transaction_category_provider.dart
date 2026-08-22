@@ -25,10 +25,12 @@ class TransactionCategoryProvider extends ChangeNotifier {
 
   void updateAuth(AuthProvider auth) {
     if (auth.isAuthenticated) {
-      loadAll();
+      Future.microtask(() => loadAll());
     } else {
-      _categories = [];
-      notifyListeners();
+      Future.microtask(() {
+        _categories = [];
+        notifyListeners();
+      });
     }
   }
 

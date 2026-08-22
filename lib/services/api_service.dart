@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_constants.dart';
 import '../models/transaction.dart';
@@ -50,7 +53,69 @@ class ApiService {
   ApiService._();
   static final ApiService instance = ApiService._();
 
-  String get _baseUrl => dotenv.env['API_BASE_URL'] ?? 'http://localhost/api';
+  /// Custom server URL saved by the user (takes priority over .env).
+  String? _customBaseUrl;
+
+  /// Returns the effective base URL:
+  /// 1. User-set custom URL (from SharedPreferences)
+  /// 2. Fallback: API_BASE_URL from .env
+  String get _baseUrl =>
+      (_customBaseUrl != null && _customBaseUrl!.isNotEmpty)
+          ? _customBaseUrl!
+          : dotenv.env['API_BASE_URL'] ?? 'http://localhost/api';
+
+  /// Load custom URL from SharedPreferences into memory.
+  /// Call this once during app startup (e.g. in AuthProvider.init).
+  Future<void> loadCustomUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(AppConstants.customServerUrlKey);
+    _customBaseUrl = (saved != null && saved.isNotEmpty) ? saved : null;
+  }
+
+  /// Persist a new custom URL and update the in-memory cache.
+  /// Pass null or empty string to revert to .env fallback.
+  Future<void> setCustomUrl(String? url) async {
+    final prefs = await SharedPreferences.getInstance();
+    final trimmed = url?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      await prefs.remove(AppConstants.customServerUrlKey);
+      _customBaseUrl = null;
+    } else {
+      await prefs.setString(AppConstants.customServerUrlKey, trimmed);
+      _customBaseUrl = trimmed;
+    }
+  }
+
+  /// Pre-flight check: test apakah [baseUrl] mengarah ke Laravel API yang valid.
+  ///
+  /// Mengirim GET ke `[baseUrl]/transaction-types` tanpa token.
+  /// - HTTP **200** atau **401** → valid (server aktif, middleware auth berjalan)
+  /// - [SocketException], [TimeoutException], 404, 5xx, dll. → invalid
+  ///
+  /// Tidak mengubah state apapun di ApiService instance.
+  static Future<bool> checkServerUrl(String baseUrl) async {
+    try {
+      final uri = Uri.parse('$baseUrl/transaction-types');
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Accept': 'application/json',
+              AppConstants.clientTypeHeader: AppConstants.clientTypeMobile,
+              'ngrok-skip-browser-warning': 'true',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+
+      return response.statusCode == 200 || response.statusCode == 401;
+    } on SocketException {
+      return false; // No network / wrong host
+    } on TimeoutException {
+      return false; // Server tidak merespons dalam 10 detik
+    } catch (_) {
+      return false; // URL malformed atau error lainnya
+    }
+  }
 
   String? _token;
 

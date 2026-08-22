@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/utils/formatters.dart';
@@ -20,73 +21,85 @@ class SyncManager {
   final _db = DatabaseHelper.instance;
   final _api = ApiService.instance;
 
-  /// Push unsynced local transactions to the server.
-  /// Returns the number of transactions successfully synced.
+  /// Push unsynced local transactions to the server in batches of 500.
+  /// Returns the total number of transactions successfully synced.
   ///
-  /// On 422: marks the record as [AppConstants.syncStatusError] (quarantine).
+  /// On 422: marks the batch records as [AppConstants.syncStatusError] (quarantine).
   /// On network error: silently returns 0 (will retry next time).
   Future<int> push() async {
-    // Fetch all pending transactions (not error ones — those need user action)
-    final pendingRows = await _db.query(
-      AppConstants.tableTransactions,
-      where: "sync_status = '${AppConstants.syncStatusPending}'",
-      orderBy: 'created_at ASC',
-      limit: AppConstants.syncBatchSize,
-    );
+    int offset = 0;
+    int totalSynced = 0;
+    const batchSize = AppConstants.syncBatchSize;
 
-    if (pendingRows.isEmpty) return 0;
+    while (true) {
+      // Fetch next batch of pending transactions (excluding quarantined error ones)
+      final pendingRows = await _db.rawQuery(
+        "SELECT * FROM ${AppConstants.tableTransactions} "
+        "WHERE sync_status = '${AppConstants.syncStatusPending}' "
+        "ORDER BY created_at ASC "
+        "LIMIT $batchSize OFFSET $offset",
+      );
 
-    final transactions = pendingRows.map(TransactionModel.fromMap).toList();
-    int syncedCount = 0;
+      if (pendingRows.isEmpty) break;
 
-    try {
-      final result = await _api.pushTransactions(transactions);
-      final synced = result['data']?['synced'] as int? ?? 0;
+      final transactions = pendingRows.map(TransactionModel.fromMap).toList();
 
-      // Mark all as synced
-      final now = DateFormatter.toApiString(DateTime.now());
-      final db = await _db.database;
-      final batch = db.batch();
-      for (final tx in transactions) {
-        batch.update(
-          AppConstants.tableTransactions,
-          {
-            'sync_status': AppConstants.syncStatusSynced,
-            'sync_error_message': null,
-            'updated_at': now,
-          },
-          where: 'id = ?',
-          whereArgs: [tx.id],
-        );
+      try {
+        final result = await _api.pushTransactions(transactions);
+        final synced = result['data']?['synced'] as int? ?? 0;
+
+        // Mark batch as synced
+        final now = DateFormatter.toApiString(DateTime.now());
+        final db = await _db.database;
+        final batch = db.batch();
+        for (final tx in transactions) {
+          batch.update(
+            AppConstants.tableTransactions,
+            {
+              'sync_status': AppConstants.syncStatusSynced,
+              'sync_error_message': null,
+              'updated_at': now,
+            },
+            where: 'id = ?',
+            whereArgs: [tx.id],
+          );
+        }
+        await batch.commit(noResult: true);
+        totalSynced += synced;
+
+        // If the batch had fewer records than the limit, we've exhausted all pending
+        if (transactions.length < batchSize) break;
+        // OFFSET does NOT advance because synced records are no longer 'pending'
+        // — next iteration will fetch the next batch starting from offset 0 of remaining pending
+      } on ValidationException catch (e) {
+        // 422: The batch was rejected — quarantine all records in this batch
+        debugPrint('[SyncManager] Push 422: ${e.message}');
+        final errorMessage = e.message;
+        final db = await _db.database;
+        final batch = db.batch();
+        for (final tx in transactions) {
+          batch.update(
+            AppConstants.tableTransactions,
+            {
+              'sync_status': AppConstants.syncStatusError,
+              'sync_error_message': errorMessage,
+            },
+            where: 'id = ?',
+            whereArgs: [tx.id],
+          );
+        }
+        await batch.commit(noResult: true);
+        // Advance offset past quarantined records so next batch doesn't refetch them
+        offset += transactions.length;
+        // Continue loop — might still have other pending records beyond this batch
+      } catch (e) {
+        // Network error or unexpected — silent, will retry next push
+        debugPrint('[SyncManager] Push error: $e');
+        return totalSynced;
       }
-      await batch.commit(noResult: true);
-      syncedCount = synced;
-    } on ValidationException catch (e) {
-      // 422: The batch was rejected — quarantine all pending records
-      debugPrint('[SyncManager] Push 422: ${e.message}');
-      final errorMessage = e.message;
-      final db = await _db.database;
-      final batch = db.batch();
-      for (final tx in transactions) {
-        batch.update(
-          AppConstants.tableTransactions,
-          {
-            'sync_status': AppConstants.syncStatusError,
-            'sync_error_message': errorMessage,
-          },
-          where: 'id = ?',
-          whereArgs: [tx.id],
-        );
-      }
-      await batch.commit(noResult: true);
-      // Return 0 — nothing was synced, but we handled it
-    } catch (e) {
-      // Network error or unexpected — silent, will retry next push
-      debugPrint('[SyncManager] Push error: $e');
-      return 0;
     }
 
-    return syncedCount;
+    return totalSynced;
   }
 
   /// Pull delta updates from the server and merge into local DB.
@@ -158,7 +171,16 @@ class SyncManager {
 
   /// Full sync: push first, then pull.
   /// Returns a record with pushed and pulled counts.
+  ///
+  /// Returns immediately with zeros if the current session is guest-only (offline mode).
   Future<({int pushed, int pulled})> sync() async {
+    // Guest mode: no network operations allowed
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(AppConstants.isGuestKey) ?? false) {
+      debugPrint('[SyncManager] Guest mode — skipping sync.');
+      return (pushed: 0, pulled: 0);
+    }
+
     final pushed = await push();
     final pulled = await pull();
     return (pushed: pushed, pulled: pulled);

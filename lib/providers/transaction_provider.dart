@@ -33,12 +33,14 @@ class TransactionProvider extends ChangeNotifier {
   void updateAuth(AuthProvider auth) {
     _isLoggedIn = auth.isAuthenticated;
     if (auth.isAuthenticated) {
-      loadAll();
+      Future.microtask(() => loadAll());
     } else {
-      _transactions = [];
-      _transactionTypes = [];
-      _categories = [];
-      notifyListeners();
+      Future.microtask(() {
+        _transactions = [];
+        _transactionTypes = [];
+        _categories = [];
+        notifyListeners();
+      });
     }
   }
 

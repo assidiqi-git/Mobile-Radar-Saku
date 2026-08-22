@@ -1,8 +1,10 @@
 class AppConstants {
   // SharedPreferences keys
-  static const String authTokenKey = 'auth_token';
-  static const String userDataKey = 'user_data';
-  static const String lastSyncedAtKey = 'last_synced_at';
+  static const String authTokenKey      = 'auth_token';
+  static const String userDataKey       = 'user_data';
+  static const String lastSyncedAtKey   = 'last_synced_at';
+  static const String isGuestKey        = 'is_guest';
+  static const String customServerUrlKey = 'custom_server_url';
 
   // SQLite table names
   static const String tableUsers = 'users';

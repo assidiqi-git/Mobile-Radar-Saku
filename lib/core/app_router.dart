@@ -147,7 +147,7 @@ class _SplashGateState extends State<_SplashGate> {
     }
 
     // Default routing
-    if (auth.isAuthenticated) {
+    if (auth.isAuthenticated || auth.isGuest) {
       Navigator.pushReplacementNamed(context, AppRouter.dashboard);
     } else {
       Navigator.pushReplacementNamed(context, AppRouter.login);

@@ -24,10 +24,12 @@ class WalletProvider extends ChangeNotifier {
 
   void updateAuth(AuthProvider auth) {
     if (auth.isAuthenticated) {
-      loadFromLocal();
+      Future.microtask(() => loadFromLocal());
     } else {
-      _wallets = [];
-      notifyListeners();
+      Future.microtask(() {
+        _wallets = [];
+        notifyListeners();
+      });
     }
   }
 
