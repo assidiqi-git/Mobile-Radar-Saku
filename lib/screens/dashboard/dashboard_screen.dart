@@ -410,7 +410,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return _buildBanner(
             context: context,
             title: 'Belum Ada Jenis Transaksi',
-            description: 'Anda belum memiliki jenis transaksi. Tambahkan jenis transaksi pada halaman profil.',
+            description:
+                'Anda belum memiliki jenis transaksi. Tambahkan jenis transaksi pada halaman profil.',
             buttonText: 'Buat Jenis Transaksi',
             onPressed: () => Navigator.push(
               context,
@@ -424,7 +425,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return _buildBanner(
           context: context,
           title: 'Belum Ada Kategori',
-          description: 'Anda belum memiliki kategori transaksi. Tambahkan kategori pada halaman profil.',
+          description:
+              'Anda belum memiliki kategori transaksi. Tambahkan kategori pada halaman profil.',
           buttonText: 'Buat Kategori',
           onPressed: () => Navigator.push(
             context,
@@ -557,10 +559,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return SliverToBoxAdapter(child: _buildEmptyTransactions());
         }
 
+        final isGuest = context.read<AuthProvider>().isGuest;
         return SliverList(
           delegate: SliverChildBuilderDelegate(
-            (context, index) =>
-                _TransactionListItem(transaction: transactions[index]),
+            (context, index) => _TransactionListItem(
+              transaction: transactions[index],
+              isGuest: isGuest,
+            ),
             childCount: transactions.length,
           ),
         );
@@ -768,8 +773,12 @@ class _WalletCard extends StatelessWidget {
 // --- Transaction List Item Widget ---
 class _TransactionListItem extends StatelessWidget {
   final TransactionModel transaction;
+  final bool isGuest;
 
-  const _TransactionListItem({required this.transaction});
+  const _TransactionListItem({
+    required this.transaction,
+    required this.isGuest,
+  });
 
   void _showErrorDialog(BuildContext context) {
     showDialog(
@@ -904,7 +913,7 @@ class _TransactionListItem extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        if (hasError) {
+        if (!isGuest && hasError) {
           _showErrorDialog(context);
         } else {
           Navigator.pushNamed(
@@ -1005,7 +1014,7 @@ class _TransactionListItem extends StatelessWidget {
                     color: AppTheme.outline,
                   ),
                 ),
-                if (hasError)
+                if (!isGuest && hasError)
                   Container(
                     margin: const EdgeInsets.only(top: 2),
                     padding: const EdgeInsets.symmetric(
@@ -1036,7 +1045,7 @@ class _TransactionListItem extends StatelessWidget {
                       ],
                     ),
                   )
-                else if (transaction.isPending)
+                else if (!isGuest && transaction.isPending)
                   Container(
                     margin: const EdgeInsets.only(top: 2),
                     padding: const EdgeInsets.symmetric(

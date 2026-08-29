@@ -216,7 +216,12 @@ class _TransactionCategoryFormScreenState
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            16,
+            20,
+            32 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // Tipe Transaksi dropdown
             _buildSectionLabel('Tipe Transaksi *'),

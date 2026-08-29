@@ -369,7 +369,9 @@ class _AddWalletSheetState extends State<_AddWalletSheet> {
           24,
           24,
           24,
-          MediaQuery.of(context).viewInsets.bottom + 32,
+          MediaQuery.of(context).viewInsets.bottom +
+              MediaQuery.of(context).padding.bottom +
+              32,
         ),
         child: Form(
           key: _formKey,

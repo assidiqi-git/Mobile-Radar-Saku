@@ -5,22 +5,31 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/sync_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../services/sync_manager.dart';
 import '../../models/transaction.dart';
 
-class TransactionDetailScreen extends StatelessWidget {
+class TransactionDetailScreen extends StatefulWidget {
   final String transactionId;
 
   const TransactionDetailScreen({super.key, required this.transactionId});
 
   @override
+  State<TransactionDetailScreen> createState() =>
+      _TransactionDetailScreenState();
+}
+
+class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
+  @override
   Widget build(BuildContext context) {
     final txProvider = context.watch<TransactionProvider>();
-    // Cari transaksi berdasarkan ID
-    final txList = txProvider.transactions.where((t) => t.id == transactionId);
+    final isGuest = context.watch<AuthProvider>().isGuest;
+    final txList = txProvider.transactions.where(
+      (t) => t.id == widget.transactionId,
+    );
     if (txList.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: const Text('Detail Transaksi')),
@@ -29,8 +38,10 @@ class TransactionDetailScreen extends StatelessWidget {
     }
     final tx = txList.first;
 
-    final action = tx.transactionCategory?.transactionType?.action ?? AppConstants.actionNeutral;
-    
+    final action =
+        tx.transactionCategory?.transactionType?.action ??
+        AppConstants.actionNeutral;
+
     // Formatting Amount
     final formattedAmount = CurrencyFormatter.format(tx.amount);
     String displayAmount = formattedAmount;
@@ -43,18 +54,45 @@ class TransactionDetailScreen extends StatelessWidget {
       amountColor = AppTheme.expenseColor;
     }
 
+    final isIncome = action == AppConstants.actionAddition;
+    final isExpense = action == AppConstants.actionDeduction;
+
+    final IconData actionIcon = tx.hasError
+        ? Icons.error_outline_rounded
+        : isIncome
+        ? Icons.arrow_downward_rounded
+        : isExpense
+        ? Icons.arrow_upward_rounded
+        : Icons.swap_horiz_rounded;
+
+    final Color actionColor = tx.hasError
+        ? AppTheme.error
+        : isIncome
+        ? AppTheme.incomeColor
+        : isExpense
+        ? AppTheme.expenseColor
+        : AppTheme.onSurfaceVariant;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Transaksi'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.error),
+            icon: const Icon(
+              Icons.delete_outline_rounded,
+              color: AppTheme.error,
+            ),
             onPressed: () => _confirmDelete(context, tx),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          16 + MediaQuery.of(context).padding.bottom,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -64,30 +102,66 @@ class TransactionDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))],
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
-                  Text(
-                    displayAmount,
-                    style: AppTheme.monoStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: amountColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSyncBadge(tx.syncStatus),
-                  if (tx.syncStatus == AppConstants.syncStatusError && tx.syncErrorMessage != null) ...[
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        tx.syncErrorMessage!,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(fontSize: 12, color: AppTheme.error),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 24),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: actionColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              actionIcon,
+                              color: actionColor,
+                              size: 20,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      Text(
+                        displayAmount,
+                        style: AppTheme.monoStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                          color: amountColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (!isGuest) ...[
+                    const SizedBox(height: 16),
+                    _buildSyncBadge(tx.syncStatus),
+                    if (tx.syncStatus == AppConstants.syncStatusError &&
+                        tx.syncErrorMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          tx.syncErrorMessage!,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppTheme.error,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),
@@ -100,30 +174,61 @@ class TransactionDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))],
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildDetailRow(
+                    'Nama',
+                    tx.name,
+                    icon: Icons.label_outline_rounded,
+                    onEdit: () => _editName(context, tx),
+                  ),
+                  const Divider(
+                    height: 24,
+                    thickness: 1,
+                    color: Color(0xFFF1F5F9),
+                  ),
+                  _buildDetailRow(
+                    'Tanggal',
+                    DateFormatter.displayFull(
+                      DateFormatter.fromApiString(tx.createdAt),
+                    ),
+                    icon: Icons.calendar_today_rounded,
+                  ),
+                  const Divider(
+                    height: 24,
+                    thickness: 1,
+                    color: Color(0xFFF1F5F9),
+                  ),
+                  _buildDetailRow(
                     'Kategori',
                     tx.transactionCategory?.name ?? '-',
                     icon: Icons.category_rounded,
                   ),
-                  const Divider(height: 24, thickness: 1, color: Color(0xFFF1F5F9)),
+                  const Divider(
+                    height: 24,
+                    thickness: 1,
+                    color: Color(0xFFF1F5F9),
+                  ),
                   _buildDetailRow(
                     'Dompet',
                     tx.wallet?.name ?? '-',
                     icon: Icons.account_balance_wallet_rounded,
                   ),
-                  const Divider(height: 24, thickness: 1, color: Color(0xFFF1F5F9)),
-                  _buildDetailRow(
-                    'Tanggal',
-                    DateFormatter.displayFull(DateFormatter.fromApiString(tx.createdAt)),
-                    icon: Icons.calendar_today_rounded,
-                  ),
                   if (tx.note != null && tx.note!.isNotEmpty) ...[
-                    const Divider(height: 24, thickness: 1, color: Color(0xFFF1F5F9)),
+                    const Divider(
+                      height: 24,
+                      thickness: 1,
+                      color: Color(0xFFF1F5F9),
+                    ),
                     _buildDetailRow(
                       'Catatan',
                       tx.note!,
@@ -140,7 +245,13 @@ class TransactionDetailScreen extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))],
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Image.network(
                   tx.photoUrl!,
@@ -149,7 +260,10 @@ class TransactionDetailScreen extends StatelessWidget {
                     height: 150,
                     color: AppTheme.surfaceContainerHigh,
                     alignment: Alignment.center,
-                    child: const Icon(Icons.broken_image_rounded, color: AppTheme.outline),
+                    child: const Icon(
+                      Icons.broken_image_rounded,
+                      color: AppTheme.outline,
+                    ),
                   ),
                 ),
               ),
@@ -160,6 +274,113 @@ class TransactionDetailScreen extends StatelessWidget {
     );
   }
 
+  /// Dialog edit nama transaksi.
+  Future<void> _editName(BuildContext context, TransactionModel tx) async {
+    final controller = TextEditingController(text: tx.name);
+    final formKey = GlobalKey<FormState>();
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Ubah Nama Transaksi',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Form(
+                    key: formKey,
+                    child: TextFormField(
+                      controller: controller,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.sentences,
+                      maxLength: AppConstants.maxNameLength,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama',
+                        prefixIcon: Icon(Icons.label_outline_rounded),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty)
+                          return 'Nama wajib diisi';
+                        if (v.trim().length > AppConstants.maxNameLength) {
+                          return 'Nama maks ${AppConstants.maxNameLength} karakter';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Batal'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (formKey.currentState!.validate()) {
+                              Navigator.pop(ctx, true);
+                            }
+                          },
+                          child: const Text('Simpan'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final newName = controller.text.trim();
+    if (newName == tx.name) return; // tidak ada perubahan
+
+    final txProvider = context.read<TransactionProvider>();
+    final syncProvider = context.read<SyncProvider>();
+
+    await txProvider.updateTransactionName(tx.id, newName);
+    await syncProvider.refreshPendingCount();
+
+    // Fire-and-forget background sync
+    SyncManager.instance.push().then((_) {
+      syncProvider.refreshPendingCount();
+    });
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Nama berhasil diubah')));
+  }
+
   Widget _buildSyncBadge(String status) {
     Color bgColor;
     Color textColor;
@@ -168,20 +389,20 @@ class TransactionDetailScreen extends StatelessWidget {
 
     switch (status) {
       case AppConstants.syncStatusSynced:
-        bgColor = const Color(0xFFD1FAE5); // emerald-100
-        textColor = const Color(0xFF065F46); // emerald-800
+        bgColor = const Color(0xFFD1FAE5);
+        textColor = const Color(0xFF065F46);
         label = 'Tersinkronisasi';
         icon = Icons.cloud_done_rounded;
         break;
       case AppConstants.syncStatusError:
-        bgColor = const Color(0xFFFEE2E2); // red-100
-        textColor = const Color(0xFF991B1B); // red-800
+        bgColor = const Color(0xFFFEE2E2);
+        textColor = const Color(0xFF991B1B);
         label = 'Gagal Sinkronisasi';
         icon = Icons.error_rounded;
         break;
-      default: // pending
-        bgColor = const Color(0xFFFEF3C7); // amber-100
-        textColor = const Color(0xFF92400E); // amber-800
+      default:
+        bgColor = const Color(0xFFFEF3C7);
+        textColor = const Color(0xFF92400E);
         label = 'Menunggu Sinkronisasi';
         icon = Icons.cloud_upload_rounded;
     }
@@ -210,9 +431,14 @@ class TransactionDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value, {required IconData icon}) {
+  Widget _buildDetailRow(
+    String label,
+    String value, {
+    required IconData icon,
+    VoidCallback? onEdit,
+  }) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(icon, size: 20, color: AppTheme.outline),
         const SizedBox(width: 12),
@@ -222,10 +448,7 @@ class TransactionDetailScreen extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppTheme.outline,
-                ),
+                style: GoogleFonts.inter(fontSize: 12, color: AppTheme.outline),
               ),
               const SizedBox(height: 2),
               Text(
@@ -239,31 +462,81 @@ class TransactionDetailScreen extends StatelessWidget {
             ],
           ),
         ),
+        if (onEdit != null)
+          IconButton(
+            icon: const Icon(Icons.edit_rounded, size: 18),
+            color: AppTheme.outline,
+            tooltip: 'Ubah',
+            visualDensity: VisualDensity.compact,
+            onPressed: onEdit,
+          ),
       ],
     );
   }
 
   void _confirmDelete(BuildContext context, TransactionModel tx) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Transaksi'),
-        content: const Text('Apakah Anda yakin ingin menghapus transaksi ini?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            onPressed: () async {
-              Navigator.pop(ctx); // Tutup dialog
-              await _performDelete(context, tx);
-            },
-            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Hapus Transaksi',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Apakah Anda yakin ingin menghapus transaksi ini?',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Batal'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.error,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await _performDelete(context, tx);
+                        },
+                        child: const Text('Hapus'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -275,11 +548,11 @@ class TransactionDetailScreen extends StatelessWidget {
     // 1. Revert wallet balance
     final amount = tx.amountDouble;
     final delta = tx.isIncome
-        ? -amount // if it was addition, we deduct to revert
+        ? -amount
         : tx.isExpense
-            ? amount // if it was deduction, we add to revert
-            : 0.0;
-            
+        ? amount
+        : 0.0;
+
     if (delta != 0) {
       await walletProvider.mutateBalance(tx.walletId, delta);
     }
@@ -294,11 +567,11 @@ class TransactionDetailScreen extends StatelessWidget {
     });
 
     if (!context.mounted) return;
-    
+
     // 4. Pop screen
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Transaksi berhasil dihapus')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Transaksi berhasil dihapus')));
   }
 }

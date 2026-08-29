@@ -53,7 +53,12 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
       backgroundColor: AppTheme.surface,
       appBar: AppBar(title: const Text('Profil & Sinkronisasi')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          20 + MediaQuery.of(context).padding.bottom,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -104,9 +109,7 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
             ),
             child: Center(
               child: Icon(
-                isGuest
-                    ? Icons.wifi_off_rounded
-                    : Icons.person_rounded,
+                isGuest ? Icons.wifi_off_rounded : Icons.person_rounded,
                 size: 30,
                 color: Colors.white,
               ),
@@ -130,10 +133,7 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
                   isGuest
                       ? 'Data hanya tersimpan di perangkat ini'
                       : (user?.email ?? '-'),
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: Colors.white70,
-                  ),
+                  style: GoogleFonts.inter(fontSize: 13, color: Colors.white70),
                 ),
               ],
             ),
@@ -184,7 +184,7 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
                     ),
                   ),
                   Text(
-                    'Mode Offline aktif — data disimpan lokal',
+                    'Mode Offline aktif',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       color: AppTheme.onSurfaceVariant,
@@ -225,13 +225,13 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
                       sync.isSyncing
                           ? Icons.sync_rounded
                           : sync.hasPending
-                              ? Icons.sync_problem_rounded
-                              : Icons.check_circle_rounded,
+                          ? Icons.sync_problem_rounded
+                          : Icons.check_circle_rounded,
                       color: sync.isSyncing
                           ? AppTheme.secondary
                           : sync.hasPending
-                              ? const Color(0xFFD97706)
-                              : AppTheme.incomeColor,
+                          ? const Color(0xFFD97706)
+                          : AppTheme.incomeColor,
                       size: 22,
                     ),
                   ),
@@ -251,8 +251,8 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
                         sync.isSyncing
                             ? 'Sedang menyinkron...'
                             : sync.hasPending
-                                ? '${sync.pendingCount} transaksi pending'
-                                : 'Semua data tersinkron',
+                            ? '${sync.pendingCount} transaksi pending'
+                            : 'Semua data tersinkron',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppTheme.onSurfaceVariant,
@@ -315,11 +315,14 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.sync_rounded),
                 label: Text(
-                    sync.isSyncing ? 'Menyinkron...' : 'Sinkron Sekarang'),
+                  sync.isSyncing ? 'Menyinkron...' : 'Sinkron Sekarang',
+                ),
               ),
             ],
           ),
@@ -398,7 +401,9 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Icon(Icons.save_rounded),
             label: Text(_savingUrl ? 'Mengecek server...' : 'Simpan URL'),
@@ -425,13 +430,12 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
       if (!isGuest) {
         await auth.logout();
         if (!mounted) return;
-        navigator.pushNamedAndRemoveUntil(
-          AppRouter.login,
-          (route) => false,
-        );
+        navigator.pushNamedAndRemoveUntil(AppRouter.login, (route) => false);
         messenger.showSnackBar(
           const SnackBar(
-            content: Text('URL dikembalikan ke default. Silakan login kembali.'),
+            content: Text(
+              'URL dikembalikan ke default. Silakan login kembali.',
+            ),
           ),
         );
       } else {
@@ -470,10 +474,7 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
     if (!isGuest) {
       await auth.logout();
       if (!mounted) return;
-      navigator.pushNamedAndRemoveUntil(
-        AppRouter.login,
-        (route) => false,
-      );
+      navigator.pushNamedAndRemoveUntil(AppRouter.login, (route) => false);
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Server berhasil dihubungkan. Silakan login kembali.'),
@@ -482,9 +483,7 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
     } else {
       setState(() => _savingUrl = false);
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('URL server berhasil disimpan.'),
-        ),
+        const SnackBar(content: Text('URL server berhasil disimpan.')),
       );
     }
   }
@@ -607,15 +606,17 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
     final catProvider = context.read<TransactionCategoryProvider>();
     try {
       await BackupRestoreService.instance.importData();
-      
+
       if (context.mounted) {
         // Refresh data di UI
-        await Future.wait([wallet.loadFromLocal(), tx.loadAll(), catProvider.loadAll()]);
+        await Future.wait([
+          wallet.loadFromLocal(),
+          tx.loadAll(),
+          catProvider.loadAll(),
+        ]);
 
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Restore data berhasil!'),
-          ),
+          const SnackBar(content: Text('Restore data berhasil!')),
         );
       }
     } catch (e) {
@@ -764,8 +765,11 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                size: 20, color: AppTheme.outline),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: AppTheme.outline,
+            ),
           ],
         ),
       ),
@@ -785,12 +789,6 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
             icon: Icons.info_outline_rounded,
             label: 'Versi Aplikasi',
             value: '0.1.0',
-          ),
-          const Divider(height: 20),
-          _buildSettingRow(
-            icon: Icons.storage_rounded,
-            label: 'Mode Penyimpanan',
-            value: 'Offline-First (SQLite)',
           ),
         ],
       ),

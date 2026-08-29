@@ -28,7 +28,8 @@ class TransactionProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  List<TransactionModel> get recentTransactions => transactions.take(5).toList();
+  List<TransactionModel> get recentTransactions =>
+      transactions.take(5).toList();
 
   void updateAuth(AuthProvider auth) {
     _isLoggedIn = auth.isAuthenticated || auth.isGuest;
@@ -51,7 +52,6 @@ class TransactionProvider extends ChangeNotifier {
       loadTransactionTypes(),
     ]);
   }
-
 
   Future<void> loadTransactions() async {
     _isLoading = true;
@@ -106,10 +106,9 @@ class TransactionProvider extends ChangeNotifier {
           );
         }
 
-        return TransactionModel.fromMap(row).copyWith(
-          transactionCategory: categoryModel,
-          wallet: walletModel,
-        );
+        return TransactionModel.fromMap(
+          row,
+        ).copyWith(transactionCategory: categoryModel, wallet: walletModel);
       }).toList();
     } catch (e) {
       _errorMessage = e.toString();
@@ -138,9 +137,9 @@ class TransactionProvider extends ChangeNotifier {
           name: row['type_name'] as String? ?? '',
           action: row['type_action'] as String? ?? AppConstants.actionNeutral,
         );
-        return TransactionCategoryModel.fromMap(row).copyWith(
-          transactionType: typeModel,
-        );
+        return TransactionCategoryModel.fromMap(
+          row,
+        ).copyWith(transactionType: typeModel);
       }).toList();
       notifyListeners();
     } catch (e) {
@@ -183,15 +182,22 @@ class TransactionProvider extends ChangeNotifier {
 
   /// Add a transaction locally. Set synced_at = null for pending sync.
   /// [onSyncComplete] is called after the background push finishes (success or fail).
+  /// [wallet] is the WalletModel for this transaction (used for immediate display).
+  /// [transactionDate] overrides the default timestamp (DateTime.now()) for backdating.
   Future<TransactionModel> addTransaction({
     required String walletId,
     required String transactionCategoryId,
     required String name,
     required double amount,
     String? note,
+    WalletModel? wallet,
+    DateTime? transactionDate,
     VoidCallback? onSyncComplete,
   }) async {
     final now = DateFormatter.toApiString(DateTime.now());
+    final createdAt = transactionDate != null
+        ? DateFormatter.toApiString(transactionDate)
+        : now;
     final tx = TransactionModel(
       id: UlidGenerator.generate(),
       walletId: walletId,
@@ -199,14 +205,17 @@ class TransactionProvider extends ChangeNotifier {
       name: name,
       amount: amount.toString(),
       note: note,
-      syncStatus: AppConstants.syncStatusPending, // pending until background sync
-      createdAt: now,
+      syncStatus:
+          AppConstants.syncStatusPending, // pending until background sync
+      createdAt: createdAt,
       updatedAt: now,
       // Look up the full category model so the new transaction shows the
       // correct icon/color immediately, before the next DB reload.
       transactionCategory: _categories
           .where((c) => c.id == transactionCategoryId)
           .firstOrNull,
+      // Pass wallet model for immediate display in transaction detail
+      wallet: wallet,
     );
 
     await DatabaseHelper.instance.insert(
@@ -214,30 +223,37 @@ class TransactionProvider extends ChangeNotifier {
       tx.toMap(),
     );
 
-    _transactions.insert(0, tx);
+    _transactions.add(tx);
+    // Sort so backdated transactions are placed correctly
+    _transactions.sort(
+      (a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''),
+    );
     notifyListeners();
 
     // Fire-and-forget: push to server immediately in background.
     // If it fails (no internet, etc.) the data stays in SQLite with
     // sync_status = 'pending' and will be picked up by the next manual sync.
-    SyncManager.instance.push().then((count) {
-      if (count > 0) {
-        debugPrint('[TransactionProvider] Background push: $count synced.');
-        // Mark transaction as synced in-memory
-        final idx = _transactions.indexWhere((t) => t.id == tx.id);
-        if (idx != -1) {
-          _transactions[idx] = _transactions[idx].copyWith(
-            syncStatus: AppConstants.syncStatusSynced,
-          );
-          notifyListeners();
-        }
-      }
-      // Notify caller (screen) so it can update SyncProvider badge
-      onSyncComplete?.call();
-    }).catchError((dynamic e) {
-      debugPrint('[TransactionProvider] Background push failed: $e');
-      onSyncComplete?.call();
-    });
+    SyncManager.instance
+        .push()
+        .then((count) {
+          if (count > 0) {
+            debugPrint('[TransactionProvider] Background push: $count synced.');
+            // Mark transaction as synced in-memory
+            final idx = _transactions.indexWhere((t) => t.id == tx.id);
+            if (idx != -1) {
+              _transactions[idx] = _transactions[idx].copyWith(
+                syncStatus: AppConstants.syncStatusSynced,
+              );
+              notifyListeners();
+            }
+          }
+          // Notify caller (screen) so it can update SyncProvider badge
+          onSyncComplete?.call();
+        })
+        .catchError((dynamic e) {
+          debugPrint('[TransactionProvider] Background push failed: $e');
+          onSyncComplete?.call();
+        });
 
     return tx;
   }
@@ -259,6 +275,60 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Update nama transaksi secara lokal dan tandai sebagai pending sync.
+  Future<void> updateTransactionName(String id, String newName) async {
+    final now = DateFormatter.toApiString(DateTime.now());
+    await DatabaseHelper.instance.update(
+      AppConstants.tableTransactions,
+      {
+        'name': newName,
+        'updated_at': now,
+        'sync_status': AppConstants.syncStatusPending,
+      },
+      'id = ?',
+      [id],
+    );
+
+    final idx = _transactions.indexWhere((t) => t.id == id);
+    if (idx != -1) {
+      _transactions[idx] = _transactions[idx].copyWith(
+        name: newName,
+        updatedAt: now,
+        syncStatus: AppConstants.syncStatusPending,
+      );
+      notifyListeners();
+    }
+  }
+
+  /// Update tanggal transaksi secara lokal dan tandai sebagai pending sync.
+  Future<void> updateTransactionDate(String id, DateTime newDate) async {
+    final newCreatedAt = DateFormatter.toApiString(newDate);
+    final now = DateFormatter.toApiString(DateTime.now());
+    await DatabaseHelper.instance.update(
+      AppConstants.tableTransactions,
+      {
+        'created_at': newCreatedAt,
+        'updated_at': now,
+        'sync_status': AppConstants.syncStatusPending,
+      },
+      'id = ?',
+      [id],
+    );
+
+    final idx = _transactions.indexWhere((t) => t.id == id);
+    if (idx != -1) {
+      _transactions[idx] = _transactions[idx].copyWith(
+        createdAt: newCreatedAt,
+        updatedAt: now,
+        syncStatus: AppConstants.syncStatusPending,
+      );
+      // Re-sort so dashboard and lists display correctly
+      _transactions.sort(
+        (a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''),
+      );
+      notifyListeners();
+    }
+  }
 
   /// Filter transactions in-memory from already-loaded SQLite data.
   /// All parameters are optional — passing null means "no filter for this field".
@@ -302,7 +372,14 @@ class TransactionProvider extends ChangeNotifier {
         if (startDate != null && txDate.isBefore(startDate)) return false;
         if (endDate != null) {
           // Include the full end day
-          final endOfDay = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+          final endOfDay = DateTime(
+            endDate.year,
+            endDate.month,
+            endDate.day,
+            23,
+            59,
+            59,
+          );
           if (txDate.isAfter(endOfDay)) return false;
         }
       }

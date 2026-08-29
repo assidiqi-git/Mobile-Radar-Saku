@@ -1,3 +1,4 @@
+import 'package:awesome_datetime_picker/awesome_datetime_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -31,6 +32,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   WalletModel? _selectedWallet;
   TransactionCategoryModel? _selectedCategory;
   bool _isLoading = false;
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void dispose() {
@@ -78,6 +80,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         note: _noteController.text.trim().isEmpty
             ? null
             : _noteController.text.trim(),
+        wallet: _selectedWallet,
+        transactionDate: _selectedDate,
         onSyncComplete: () => syncProvider.refreshPendingCount(),
       );
 
@@ -113,6 +117,86 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 
+  void _showDateTimePicker() {
+    final now = DateTime.now();
+    DateTime safeInitialDate = _selectedDate;
+    if (safeInitialDate.isAfter(now)) {
+      safeInitialDate = now;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Pilih Waktu Transaksi',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                AwesomeDateTimePicker(
+                  backgroundColor: Colors.transparent,
+                  itemWidth: (MediaQuery.of(ctx).size.width - 40) / 5.5,
+                  initialDateTime: AwesomeDateTime(
+                    date: AwesomeDate(
+                      year: safeInitialDate.year,
+                      month: safeInitialDate.month,
+                      day: safeInitialDate.day,
+                    ),
+                    time: AwesomeTime(
+                      hour: safeInitialDate.hour,
+                      minute: safeInitialDate.minute,
+                    ),
+                  ),
+                  maxDateTime: AwesomeDateTime(
+                    date: AwesomeDate(
+                      year: now.year,
+                      month: now.month,
+                      day: now.day,
+                    ),
+                    time: AwesomeTime(hour: now.hour, minute: now.minute),
+                  ),
+                  onChanged: (AwesomeDateTime dateTime) {
+                    setState(() {
+                      _selectedDate = DateTime(
+                        dateTime.date.year,
+                        dateTime.date.month,
+                        dateTime.date.day,
+                        dateTime.time.hour,
+                        dateTime.time.minute,
+                      );
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48, // Tambahkan tinggi spesifik untuk tombol
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Selesai'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,17 +207,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.close_rounded),
         ),
-        actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _save,
-            child: const Text('Simpan'),
-          ),
-        ],
       ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            20 + MediaQuery.of(context).padding.bottom,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -149,16 +232,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 maxLength: AppConstants.maxNameLength,
                 decoration: const InputDecoration(
-                  labelText: 'Keterangan',
+                  labelText: 'Nama',
                   prefixIcon: Icon(Icons.edit_note_rounded),
                   counterText: '', // hide counter, validation handles it
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'Keterangan wajib diisi';
+                    return 'Nama wajib diisi';
                   }
                   if (v.trim().length > AppConstants.maxNameLength) {
-                    return 'Keterangan maks ${AppConstants.maxNameLength} karakter';
+                    return 'Nama maks ${AppConstants.maxNameLength} karakter';
                   }
                   return null;
                 },
@@ -169,6 +252,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               const SizedBox(height: 16),
               // Category Dropdown
               _buildCategoryDropdown(),
+              const SizedBox(height: 16),
+              // Date Selector
+              InkWell(
+                onTap: _showDateTimePicker,
+                borderRadius: BorderRadius.circular(12),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Tanggal & Waktu',
+                    prefixIcon: Icon(Icons.calendar_today_rounded),
+                  ),
+                  child: Text(
+                    DateFormatter.displayFull(_selectedDate),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
               // Note Field (optional)
               TextFormField(

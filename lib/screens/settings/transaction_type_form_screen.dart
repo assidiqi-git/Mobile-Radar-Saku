@@ -177,7 +177,12 @@ class _TransactionTypeFormScreenState
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            16,
+            20,
+            32 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             // Name field
             _buildSectionLabel('Nama Tipe *'),

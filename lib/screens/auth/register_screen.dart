@@ -70,7 +70,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: AppTheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            0,
+            24,
+            MediaQuery.of(context).padding.bottom,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

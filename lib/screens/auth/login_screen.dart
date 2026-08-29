@@ -50,8 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _loginAsGuest() async {
     setState(() => _isLoading = true);
     await context.read<AuthProvider>().loginAsGuest();
-    
-    // Yield to the event loop to prevent ConcurrentModificationError 
+
+    // Yield to the event loop to prevent ConcurrentModificationError
     // in Flutter's PointerRouter if the async operations finish too fast.
     await Future.delayed(const Duration(milliseconds: 50));
 
@@ -182,8 +182,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (v == null || v.trim().isEmpty) {
                             return 'Email wajib diisi';
                           }
-                          if (!v.contains('@'))
+                          if (!v.contains('@')) {
                             return 'Format email tidak valid';
+                          }
                           return null;
                         },
                       ),
