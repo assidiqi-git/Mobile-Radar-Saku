@@ -59,10 +59,9 @@ class ApiService {
   /// Returns the effective base URL:
   /// 1. User-set custom URL (from SharedPreferences)
   /// 2. Fallback: API_BASE_URL from .env
-  String get _baseUrl =>
-      (_customBaseUrl != null && _customBaseUrl!.isNotEmpty)
-          ? _customBaseUrl!
-          : dotenv.env['API_BASE_URL'] ?? 'http://localhost/api';
+  String get _baseUrl => (_customBaseUrl != null && _customBaseUrl!.isNotEmpty)
+      ? _customBaseUrl!
+      : dotenv.env['API_BASE_URL'] ?? 'http://localhost/api';
 
   /// Load custom URL from SharedPreferences into memory.
   /// Call this once during app startup (e.g. in AuthProvider.init).
@@ -138,14 +137,6 @@ class ApiService {
   }
 
   Uri _uri(String path, [Map<String, String>? queryParams]) {
-    // Fast-fail in Guest mode (or when unauthenticated) to prevent hanging network calls.
-    if ((_token == null || _token!.isEmpty) &&
-        !path.startsWith('/login') &&
-        !path.startsWith('/register') &&
-        !path.startsWith('/logout')) {
-      throw const AuthException();
-    }
-
     final base = Uri.parse('$_baseUrl$path');
     if (queryParams != null && queryParams.isNotEmpty) {
       return base.replace(queryParameters: queryParams);
@@ -158,7 +149,8 @@ class ApiService {
 
     // Guard against non-JSON responses (e.g. ngrok HTML interstitial pages)
     final contentType = response.headers['content-type'] ?? '';
-    if (!contentType.contains('application/json') && body.trimLeft().startsWith('<')) {
+    if (!contentType.contains('application/json') &&
+        body.trimLeft().startsWith('<')) {
       throw ApiException(
         statusCode: response.statusCode,
         message:
@@ -232,7 +224,9 @@ class ApiService {
   /// POST /logout
   Future<void> logout() async {
     try {
-      await http.post(_uri('/logout'), headers: _headers).timeout(const Duration(seconds: 3));
+      await http
+          .post(_uri('/logout'), headers: _headers)
+          .timeout(const Duration(seconds: 3));
     } catch (_) {
       // Ignore errors on logout
     }
@@ -347,7 +341,10 @@ class ApiService {
 
   /// DELETE /transaction-types/{id}
   Future<void> deleteTransactionType(String id) async {
-    final response = await http.delete(_uri('/transaction-types/$id'), headers: _headers);
+    final response = await http.delete(
+      _uri('/transaction-types/$id'),
+      headers: _headers,
+    );
     await _handleResponse(response);
   }
 
@@ -378,7 +375,9 @@ class ApiService {
       body: jsonEncode(body),
     );
     final data = await _handleResponse(response);
-    return TransactionCategoryModel.fromJson(data['data'] as Map<String, dynamic>);
+    return TransactionCategoryModel.fromJson(
+      data['data'] as Map<String, dynamic>,
+    );
   }
 
   /// PUT /transaction-categories/{id}
@@ -389,7 +388,8 @@ class ApiService {
     String? description,
   }) async {
     final body = <String, dynamic>{};
-    if (transactionTypeId != null) body['transaction_type_id'] = transactionTypeId;
+    if (transactionTypeId != null)
+      body['transaction_type_id'] = transactionTypeId;
     if (name != null) body['name'] = name;
     if (description != null) body['description'] = description;
     final response = await http.put(
@@ -398,12 +398,17 @@ class ApiService {
       body: jsonEncode(body),
     );
     final data = await _handleResponse(response);
-    return TransactionCategoryModel.fromJson(data['data'] as Map<String, dynamic>);
+    return TransactionCategoryModel.fromJson(
+      data['data'] as Map<String, dynamic>,
+    );
   }
 
   /// DELETE /transaction-categories/{id}
   Future<void> deleteTransactionCategory(String id) async {
-    final response = await http.delete(_uri('/transaction-categories/$id'), headers: _headers);
+    final response = await http.delete(
+      _uri('/transaction-categories/$id'),
+      headers: _headers,
+    );
     await _handleResponse(response);
   }
 
@@ -447,7 +452,8 @@ class ApiService {
 
   /// POST /sync/transactions — push batch (max 500)
   Future<Map<String, dynamic>> pushTransactions(
-      List<TransactionModel> transactions) async {
+    List<TransactionModel> transactions,
+  ) async {
     final payload = {
       'transactions': transactions.map((t) => t.toSyncPayload()).toList(),
     };
@@ -460,7 +466,9 @@ class ApiService {
   }
 
   /// GET /sync/transactions/pull?last_synced_at=
-  Future<List<TransactionModel>> pullTransactions({String? lastSyncedAt}) async {
+  Future<List<TransactionModel>> pullTransactions({
+    String? lastSyncedAt,
+  }) async {
     final queryParams = lastSyncedAt != null
         ? {'last_synced_at': lastSyncedAt}
         : <String, String>{};

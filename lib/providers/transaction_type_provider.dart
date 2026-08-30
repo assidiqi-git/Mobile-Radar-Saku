@@ -20,9 +20,12 @@ class TransactionTypeProvider extends ChangeNotifier {
 
   final _db = DatabaseHelper.instance;
 
+  bool _isGuest = false;
+
   // ---- Auth lifecycle -------------------------------------------------------
 
   void updateAuth(AuthProvider auth) {
+    _isGuest = auth.isGuest;
     if (auth.isAuthenticated || auth.isGuest) {
       Future.microtask(() => loadAll());
     } else {
@@ -84,30 +87,35 @@ class TransactionTypeProvider extends ChangeNotifier {
     notifyListeners();
 
     // Background push
-    ApiService.instance.storeTransactionType(
-      name: name,
-      action: action,
-      description: description,
-    ).then((serverModel) async {
-      // Update local db with new ID from server if changed, and set synced
-      await _db.update(
-        AppConstants.tableTransactionTypes,
-        {
-          ...serverModel.toMap(),
-          'sync_status': AppConstants.syncStatusSynced,
-          'sync_error_message': null,
-        },
-        'id = ?',
-        [model.id],
-      );
-      final idx = _types.indexWhere((t) => t.id == model.id);
-      if (idx != -1) {
-        _types[idx] = serverModel;
-        notifyListeners();
-      }
-    }).catchError((dynamic e) {
-      debugPrint('[TransactionTypeProvider] store push failed: $e');
-    });
+    if (!_isGuest) {
+      ApiService.instance
+          .storeTransactionType(
+            name: name,
+            action: action,
+            description: description,
+          )
+          .then((serverModel) async {
+            // Update local db with new ID from server if changed, and set synced
+            await _db.update(
+              AppConstants.tableTransactionTypes,
+              {
+                ...serverModel.toMap(),
+                'sync_status': AppConstants.syncStatusSynced,
+                'sync_error_message': null,
+              },
+              'id = ?',
+              [model.id],
+            );
+            final idx = _types.indexWhere((t) => t.id == model.id);
+            if (idx != -1) {
+              _types[idx] = serverModel;
+              notifyListeners();
+            }
+          })
+          .catchError((dynamic e) {
+            debugPrint('[TransactionTypeProvider] store push failed: $e');
+          });
+    }
 
     return model;
   }
@@ -137,10 +145,7 @@ class TransactionTypeProvider extends ChangeNotifier {
 
     await _db.update(
       AppConstants.tableTransactionTypes,
-      {
-        ...updated.toMap(),
-        'sync_status': AppConstants.syncStatusPending,
-      },
+      {...updated.toMap(), 'sync_status': AppConstants.syncStatusPending},
       'id = ?',
       [id],
     );
@@ -150,24 +155,29 @@ class TransactionTypeProvider extends ChangeNotifier {
     notifyListeners();
 
     // Background push
-    ApiService.instance.updateTransactionType(
-      id,
-      name: name,
-      action: action,
-      description: description,
-    ).then((_) async {
-      await _db.update(
-        AppConstants.tableTransactionTypes,
-        {
-          'sync_status': AppConstants.syncStatusSynced,
-          'sync_error_message': null,
-        },
-        'id = ?',
-        [id],
-      );
-    }).catchError((dynamic e) {
-      debugPrint('[TransactionTypeProvider] update push failed: $e');
-    });
+    if (!_isGuest) {
+      ApiService.instance
+          .updateTransactionType(
+            id,
+            name: name,
+            action: action,
+            description: description,
+          )
+          .then((_) async {
+            await _db.update(
+              AppConstants.tableTransactionTypes,
+              {
+                'sync_status': AppConstants.syncStatusSynced,
+                'sync_error_message': null,
+              },
+              'id = ?',
+              [id],
+            );
+          })
+          .catchError((dynamic e) {
+            debugPrint('[TransactionTypeProvider] update push failed: $e');
+          });
+    }
   }
 
   // ---- Delete (soft) --------------------------------------------------------
@@ -180,37 +190,40 @@ class TransactionTypeProvider extends ChangeNotifier {
     );
     final count = checkRows.first['count'] as int? ?? 0;
     if (count > 0) {
-      throw Exception('Tipe ini tidak dapat dihapus karena masih digunakan oleh kategori.');
+      throw Exception(
+        'Tipe ini tidak dapat dihapus karena masih digunakan oleh kategori.',
+      );
     }
 
     // 2. Server Check / Push
-    try {
-      await ApiService.instance.deleteTransactionType(id);
-      // Hard delete locally if server succeeds
-      await _db.delete(
-        AppConstants.tableTransactionTypes,
-        'id = ?',
-        [id],
-      );
-    } catch (e) {
-      // If the error is an ApiException with status 409, abort and rethrow
-      if (e is ApiException && e.statusCode == 409) {
-        throw Exception(e.message);
+    if (!_isGuest) {
+      try {
+        await ApiService.instance.deleteTransactionType(id);
+        // Hard delete locally if server succeeds
+        await _db.delete(AppConstants.tableTransactionTypes, 'id = ?', [id]);
+        _types.removeWhere((t) => t.id == id);
+        notifyListeners();
+        return;
+      } catch (e) {
+        // If the error is an ApiException with status 409, abort and rethrow
+        if (e is ApiException && e.statusCode == 409) {
+          throw Exception(e.message);
+        }
       }
-      
-      // Other errors (like offline network error): Soft delete locally
-      final now = DateFormatter.toApiString(DateTime.now());
-      await _db.update(
-        AppConstants.tableTransactionTypes,
-        {
-          'deleted_at': now,
-          'sync_status': AppConstants.syncStatusPending,
-          'updated_at': now,
-        },
-        'id = ?',
-        [id],
-      );
     }
+
+    // Soft delete locally if guest or if API call failed (offline)
+    final now = DateFormatter.toApiString(DateTime.now());
+    await _db.update(
+      AppConstants.tableTransactionTypes,
+      {
+        'deleted_at': now,
+        'sync_status': AppConstants.syncStatusPending,
+        'updated_at': now,
+      },
+      'id = ?',
+      [id],
+    );
 
     // 3. Update UI state
     _types.removeWhere((t) => t.id == id);
@@ -226,6 +239,7 @@ class TransactionTypeProvider extends ChangeNotifier {
       [id],
     );
     if (rows.isEmpty) return AppConstants.syncStatusSynced;
-    return rows.first['sync_status'] as String? ?? AppConstants.syncStatusSynced;
+    return rows.first['sync_status'] as String? ??
+        AppConstants.syncStatusSynced;
   }
 }

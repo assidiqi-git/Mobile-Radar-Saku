@@ -21,9 +21,12 @@ class TransactionCategoryProvider extends ChangeNotifier {
 
   final _db = DatabaseHelper.instance;
 
+  bool _isGuest = false;
+
   // ---- Auth lifecycle -------------------------------------------------------
 
   void updateAuth(AuthProvider auth) {
+    _isGuest = auth.isGuest;
     if (auth.isAuthenticated || auth.isGuest) {
       Future.microtask(() => loadAll());
     } else {
@@ -60,14 +63,15 @@ class TransactionCategoryProvider extends ChangeNotifier {
             ? TransactionTypeModel(
                 id: row['type_id'] as String,
                 name: row['type_name'] as String? ?? '',
-                action: row['type_action'] as String? ?? AppConstants.actionNeutral,
+                action:
+                    row['type_action'] as String? ?? AppConstants.actionNeutral,
                 description: row['type_description'] as String?,
               )
             : null;
 
-        return TransactionCategoryModel.fromMap(row).copyWith(
-          transactionType: typeModel,
-        );
+        return TransactionCategoryModel.fromMap(
+          row,
+        ).copyWith(transactionType: typeModel);
       }).toList();
     } catch (e) {
       _errorMessage = e.toString();
@@ -107,31 +111,38 @@ class TransactionCategoryProvider extends ChangeNotifier {
     notifyListeners();
 
     // Background push
-    ApiService.instance.storeTransactionCategory(
-      transactionTypeId: transactionTypeId,
-      name: name,
-      description: description,
-    ).then((serverModel) async {
-      final updatedModel = serverModel.copyWith(transactionType: typeModel);
-      // Update local db with new ID from server if changed, and set synced
-      await _db.update(
-        AppConstants.tableTransactionCategories,
-        {
-          ...updatedModel.toMap(),
-          'sync_status': AppConstants.syncStatusSynced,
-          'sync_error_message': null,
-        },
-        'id = ?',
-        [model.id],
-      );
-      final idx = _categories.indexWhere((c) => c.id == model.id);
-      if (idx != -1) {
-        _categories[idx] = updatedModel;
-        notifyListeners();
-      }
-    }).catchError((dynamic e) {
-      debugPrint('[TransactionCategoryProvider] store push failed: $e');
-    });
+    if (!_isGuest) {
+      ApiService.instance
+          .storeTransactionCategory(
+            transactionTypeId: transactionTypeId,
+            name: name,
+            description: description,
+          )
+          .then((serverModel) async {
+            final updatedModel = serverModel.copyWith(
+              transactionType: typeModel,
+            );
+            // Update local db with new ID from server if changed, and set synced
+            await _db.update(
+              AppConstants.tableTransactionCategories,
+              {
+                ...updatedModel.toMap(),
+                'sync_status': AppConstants.syncStatusSynced,
+                'sync_error_message': null,
+              },
+              'id = ?',
+              [model.id],
+            );
+            final idx = _categories.indexWhere((c) => c.id == model.id);
+            if (idx != -1) {
+              _categories[idx] = updatedModel;
+              notifyListeners();
+            }
+          })
+          .catchError((dynamic e) {
+            debugPrint('[TransactionCategoryProvider] store push failed: $e');
+          });
+    }
 
     return model;
   }
@@ -163,10 +174,7 @@ class TransactionCategoryProvider extends ChangeNotifier {
 
     await _db.update(
       AppConstants.tableTransactionCategories,
-      {
-        ...updated.toMap(),
-        'sync_status': AppConstants.syncStatusPending,
-      },
+      {...updated.toMap(), 'sync_status': AppConstants.syncStatusPending},
       'id = ?',
       [id],
     );
@@ -176,24 +184,29 @@ class TransactionCategoryProvider extends ChangeNotifier {
     notifyListeners();
 
     // Background push
-    ApiService.instance.updateTransactionCategory(
-      id,
-      transactionTypeId: transactionTypeId,
-      name: name,
-      description: description,
-    ).then((_) async {
-      await _db.update(
-        AppConstants.tableTransactionCategories,
-        {
-          'sync_status': AppConstants.syncStatusSynced,
-          'sync_error_message': null,
-        },
-        'id = ?',
-        [id],
-      );
-    }).catchError((dynamic e) {
-      debugPrint('[TransactionCategoryProvider] update push failed: $e');
-    });
+    if (!_isGuest) {
+      ApiService.instance
+          .updateTransactionCategory(
+            id,
+            transactionTypeId: transactionTypeId,
+            name: name,
+            description: description,
+          )
+          .then((_) async {
+            await _db.update(
+              AppConstants.tableTransactionCategories,
+              {
+                'sync_status': AppConstants.syncStatusSynced,
+                'sync_error_message': null,
+              },
+              'id = ?',
+              [id],
+            );
+          })
+          .catchError((dynamic e) {
+            debugPrint('[TransactionCategoryProvider] update push failed: $e');
+          });
+    }
   }
 
   // ---- Delete (soft) --------------------------------------------------------
@@ -206,36 +219,41 @@ class TransactionCategoryProvider extends ChangeNotifier {
     );
     final count = checkRows.first['count'] as int? ?? 0;
     if (count > 0) {
-      throw Exception('Kategori ini tidak dapat dihapus karena masih digunakan oleh transaksi.');
+      throw Exception(
+        'Kategori ini tidak dapat dihapus karena masih digunakan oleh transaksi.',
+      );
     }
 
     // 2. Server Check / Push
-    try {
-      await ApiService.instance.deleteTransactionCategory(id);
-      // Hard delete locally if server succeeds
-      await _db.delete(
-        AppConstants.tableTransactionCategories,
-        'id = ?',
-        [id],
-      );
-    } catch (e) {
-      if (e is ApiException && e.statusCode == 409) {
-        throw Exception(e.message);
+    if (!_isGuest) {
+      try {
+        await ApiService.instance.deleteTransactionCategory(id);
+        // Hard delete locally if server succeeds
+        await _db.delete(AppConstants.tableTransactionCategories, 'id = ?', [
+          id,
+        ]);
+        _categories.removeWhere((c) => c.id == id);
+        notifyListeners();
+        return;
+      } catch (e) {
+        if (e is ApiException && e.statusCode == 409) {
+          throw Exception(e.message);
+        }
       }
-
-      // Offline or other error -> Soft delete locally
-      final now = DateFormatter.toApiString(DateTime.now());
-      await _db.update(
-        AppConstants.tableTransactionCategories,
-        {
-          'deleted_at': now,
-          'sync_status': AppConstants.syncStatusPending,
-          'updated_at': now,
-        },
-        'id = ?',
-        [id],
-      );
     }
+
+    // Offline or guest or other error -> Soft delete locally
+    final now = DateFormatter.toApiString(DateTime.now());
+    await _db.update(
+      AppConstants.tableTransactionCategories,
+      {
+        'deleted_at': now,
+        'sync_status': AppConstants.syncStatusPending,
+        'updated_at': now,
+      },
+      'id = ?',
+      [id],
+    );
 
     // 3. Update UI state
     _categories.removeWhere((c) => c.id == id);

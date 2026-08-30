@@ -473,68 +473,29 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   }
 
   void _confirmDelete(BuildContext context, TransactionModel tx) {
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Hapus Transaksi',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Apakah Anda yakin ingin menghapus transaksi ini?',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: AppTheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Batal'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.error,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () async {
-                          Navigator.pop(ctx);
-                          await _performDelete(context, tx);
-                        },
-                        child: const Text('Hapus'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Transaksi'),
+        content: const Text('Apakah Anda yakin ingin menghapus transaksi ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
           ),
-        );
-      },
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _performDelete(context, tx);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
   }
 

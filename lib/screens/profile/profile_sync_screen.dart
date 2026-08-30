@@ -858,7 +858,7 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Batal'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
               await context.read<AuthProvider>().logout();
@@ -870,8 +870,9 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
+            style: FilledButton.styleFrom(
               backgroundColor: AppTheme.expenseColor,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Keluar'),
           ),

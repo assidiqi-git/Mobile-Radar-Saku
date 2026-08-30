@@ -11,45 +11,256 @@ import '../../core/utils/formatters.dart';
 import '../../models/wallet.dart';
 import '../../providers/wallet_provider.dart';
 
-class WalletsScreen extends StatelessWidget {
+import '../../core/app_router.dart';
+
+class WalletsScreen extends StatefulWidget {
   const WalletsScreen({super.key});
+
+  @override
+  State<WalletsScreen> createState() => _WalletsScreenState();
+}
+
+class _WalletsScreenState extends State<WalletsScreen>
+    with SingleTickerProviderStateMixin {
+  bool _fabExpanded = false;
+  late AnimationController _fabController;
+  late Animation<double> _fabRotation;
+  late Animation<double> _fabScale;
+  late Animation<Offset> _fabSlide;
+
+  @override
+  void initState() {
+    super.initState();
+    _fabController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+    _fabRotation = Tween<double>(
+      begin: 0,
+      end: 0.375,
+    ).animate(CurvedAnimation(parent: _fabController, curve: Curves.easeInOut));
+    _fabScale = CurvedAnimation(parent: _fabController, curve: Curves.easeOut);
+    _fabSlide = Tween<Offset>(
+      begin: const Offset(1.2, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _fabController, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _fabController.dispose();
+    super.dispose();
+  }
+
+  void _toggleFab() {
+    setState(() => _fabExpanded = !_fabExpanded);
+    if (_fabExpanded) {
+      _fabController.forward();
+    } else {
+      _fabController.reverse();
+    }
+  }
+
+  void _closeFab() {
+    if (_fabExpanded) {
+      setState(() => _fabExpanded = false);
+      _fabController.reverse();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('Dompet Saya')),
-      body: Consumer<WalletProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: GestureDetector(
+        onTap: _closeFab,
+        behavior: HitTestBehavior.translucent,
+        child: Consumer<WalletProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final wallets = provider.wallets;
-          return Column(
-            children: [
-              // Total balance
-              _buildTotalCard(provider.totalBalance),
-              // Wallet list
-              Expanded(
-                child: wallets.isEmpty
-                    ? _buildEmpty(context)
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                        itemCount: wallets.length,
-                        itemBuilder: (_, i) => _WalletTile(wallet: wallets[i]),
+            final wallets = provider.wallets;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Kelola',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppTheme.onSurfaceVariant,
+                          ),
+                        ),
+                        Text(
+                          'Dompet Saya',
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Total balance
+                _buildTotalCard(provider.totalBalance),
+                // Wallet list
+                Expanded(
+                  child: wallets.isEmpty
+                      ? _buildEmpty(context)
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                          itemCount: wallets.length,
+                          itemBuilder: (_, i) =>
+                              _WalletTile(wallet: wallets[i]),
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // --- Mini FAB: Transfer ---
+          SlideTransition(
+            position: _fabSlide,
+            child: FadeTransition(
+              opacity: _fabScale,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Label
+                    AnimatedOpacity(
+                      opacity: _fabExpanded ? 1 : 0,
+                      duration: const Duration(milliseconds: 150),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.onSurface.withOpacity(0.75),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Transfer',
+                          style: TextStyle(
+                            color: AppTheme.surface,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
+                    ),
+                    FloatingActionButton.small(
+                      heroTag: 'fab_transfer',
+                      onPressed: _fabExpanded
+                          ? () {
+                              _closeFab();
+                              Navigator.pushNamed(context, AppRouter.transfer);
+                            }
+                          : null,
+                      backgroundColor: AppTheme.surfaceContainerLowest,
+                      foregroundColor: AppTheme.primary,
+                      elevation: 2,
+                      child: const Icon(Icons.swap_horiz_rounded, size: 20),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          );
-        },
+            ),
+          ),
+          // --- Mini FAB: Tambah Dompet ---
+          SlideTransition(
+            position: _fabSlide,
+            child: FadeTransition(
+              opacity: _fabScale,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedOpacity(
+                      opacity: _fabExpanded ? 1 : 0,
+                      duration: const Duration(milliseconds: 150),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.onSurface.withOpacity(0.75),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Tambah Dompet',
+                          style: TextStyle(
+                            color: AppTheme.surface,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    FloatingActionButton.small(
+                      heroTag: 'fab_add_wallet',
+                      onPressed: _fabExpanded
+                          ? () {
+                              _closeFab();
+                              _showAddWalletSheet(context);
+                            }
+                          : null,
+                      backgroundColor: AppTheme.surfaceContainerLowest,
+                      foregroundColor: AppTheme.primary,
+                      elevation: 2,
+                      child: const Icon(
+                        Icons.account_balance_wallet_rounded,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // --- Main FAB ---
+          RotationTransition(
+            turns: _fabRotation,
+            child: FloatingActionButton(
+              heroTag: 'fab_main_wallet',
+              onPressed: _toggleFab,
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.add_rounded),
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddWalletSheet(context),
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add_rounded),
-      ),
+    );
+  }
+
+  void _showAddWalletSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _AddWalletSheet(),
     );
   }
 
@@ -122,15 +333,6 @@ class WalletsScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showAddWalletSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _AddWalletSheet(),
     );
   }
 }
@@ -273,13 +475,14 @@ class _WalletTile extends StatelessWidget {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Batal'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               context.read<WalletProvider>().deleteWallet(wallet.id);
               Navigator.pop(ctx);
             },
-            style: ElevatedButton.styleFrom(
+            style: FilledButton.styleFrom(
               backgroundColor: AppTheme.expenseColor,
+              foregroundColor: Colors.white,
             ),
             child: const Text('Hapus'),
           ),

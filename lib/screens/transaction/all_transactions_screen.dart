@@ -78,16 +78,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, AppRouter.addTransaction),
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        // shape: RoundedRectangleBorder(
-        //   borderRadius: BorderRadius.circular(16),
-        // ),
-        child: const Icon(Icons.add_rounded, size: 28),
-      ),
     );
   }
 
@@ -96,22 +86,29 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   Widget _buildAppBar() {
     return Container(
       color: AppTheme.surfaceContainerLowest,
-      padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(20, 24, 8, 16),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-            onPressed: () => Navigator.pop(context),
-            color: AppTheme.onSurface,
-          ),
           Expanded(
-            child: Text(
-              'Semua Transaksi',
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.onSurface,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Riwayat',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
+                ),
+                Text(
+                  'Semua Transaksi',
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.onSurface,
+                  ),
+                ),
+              ],
             ),
           ),
           // Date range picker button
@@ -222,15 +219,14 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   icon: Icons.arrow_downward_rounded,
                   iconColor: AppTheme.incomeColor,
                   isSelected: _selectedAction == AppConstants.actionAddition,
-                  onTap: () => setState(
-                    () {
-                      _selectedAction =
-                          _selectedAction == AppConstants.actionAddition
-                          ? null
-                          : AppConstants.actionAddition;
-                      _selectedCategoryId = null; // reset category on action change
-                    },
-                  ),
+                  onTap: () => setState(() {
+                    _selectedAction =
+                        _selectedAction == AppConstants.actionAddition
+                        ? null
+                        : AppConstants.actionAddition;
+                    _selectedCategoryId =
+                        null; // reset category on action change
+                  }),
                 ),
                 const SizedBox(width: 8),
                 _ActionChip(
@@ -238,15 +234,14 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   icon: Icons.arrow_upward_rounded,
                   iconColor: AppTheme.expenseColor,
                   isSelected: _selectedAction == AppConstants.actionDeduction,
-                  onTap: () => setState(
-                    () {
-                      _selectedAction =
-                          _selectedAction == AppConstants.actionDeduction
-                          ? null
-                          : AppConstants.actionDeduction;
-                      _selectedCategoryId = null; // reset category on action change
-                    },
-                  ),
+                  onTap: () => setState(() {
+                    _selectedAction =
+                        _selectedAction == AppConstants.actionDeduction
+                        ? null
+                        : AppConstants.actionDeduction;
+                    _selectedCategoryId =
+                        null; // reset category on action change
+                  }),
                 ),
                 const SizedBox(width: 8),
                 _ActionChip(
@@ -254,15 +249,14 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   icon: Icons.remove_rounded,
                   iconColor: AppTheme.secondary,
                   isSelected: _selectedAction == AppConstants.actionNeutral,
-                  onTap: () => setState(
-                    () {
-                      _selectedAction =
-                          _selectedAction == AppConstants.actionNeutral
-                          ? null
-                          : AppConstants.actionNeutral;
-                      _selectedCategoryId = null; // reset category on action change
-                    },
-                  ),
+                  onTap: () => setState(() {
+                    _selectedAction =
+                        _selectedAction == AppConstants.actionNeutral
+                        ? null
+                        : AppConstants.actionNeutral;
+                    _selectedCategoryId =
+                        null; // reset category on action change
+                  }),
                 ),
               ],
             ),
@@ -306,8 +300,10 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
               final filteredCategories = _selectedAction == null
                   ? allCategories
                   : allCategories
-                      .where((c) => c.transactionType?.action == _selectedAction)
-                      .toList();
+                        .where(
+                          (c) => c.transactionType?.action == _selectedAction,
+                        )
+                        .toList();
 
               if (filteredCategories.isEmpty) {
                 return const SizedBox(height: 6);

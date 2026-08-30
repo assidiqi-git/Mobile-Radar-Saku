@@ -22,7 +22,10 @@ class WalletProvider extends ChangeNotifier {
   double get totalBalance =>
       wallets.fold(0.0, (sum, w) => sum + w.balanceDouble);
 
+  bool _isGuest = false;
+
   void updateAuth(AuthProvider auth) {
+    _isGuest = auth.isGuest;
     if (auth.isAuthenticated || auth.isGuest) {
       Future.microtask(() => loadFromLocal());
     } else {
@@ -53,6 +56,7 @@ class WalletProvider extends ChangeNotifier {
 
   /// Sync wallets from server and persist locally.
   Future<void> fetchFromServer() async {
+    if (_isGuest) return;
     try {
       final serverWallets = await ApiService.instance.getWallets();
       final db = DatabaseHelper.instance;
@@ -90,21 +94,23 @@ class WalletProvider extends ChangeNotifier {
     notifyListeners();
 
     // Try to push to server
-    try {
-      final serverWallet = await ApiService.instance.storeWallet(
-        name: name,
-        type: type,
-        balance: balance,
-      );
-      // Update local with server-assigned ID if needed
-      await DatabaseHelper.instance.update(
-        AppConstants.tableWallets,
-        serverWallet.toMap(),
-        'id = ?',
-        [wallet.id],
-      );
-    } catch (e) {
-      debugPrint('[WalletProvider] createWallet server error: $e');
+    if (!_isGuest) {
+      try {
+        final serverWallet = await ApiService.instance.storeWallet(
+          name: name,
+          type: type,
+          balance: balance,
+        );
+        // Update local with server-assigned ID if needed
+        await DatabaseHelper.instance.update(
+          AppConstants.tableWallets,
+          serverWallet.toMap(),
+          'id = ?',
+          [wallet.id],
+        );
+      } catch (e) {
+        debugPrint('[WalletProvider] createWallet server error: $e');
+      }
     }
 
     return wallet;
@@ -137,15 +143,17 @@ class WalletProvider extends ChangeNotifier {
     _wallets[existing] = updated;
     notifyListeners();
 
-    try {
-      await ApiService.instance.updateWallet(
-        id,
-        name: name,
-        type: type,
-        balance: balance,
-      );
-    } catch (e) {
-      debugPrint('[WalletProvider] updateWallet server error: $e');
+    if (!_isGuest) {
+      try {
+        await ApiService.instance.updateWallet(
+          id,
+          name: name,
+          type: type,
+          balance: balance,
+        );
+      } catch (e) {
+        debugPrint('[WalletProvider] updateWallet server error: $e');
+      }
     }
   }
 
@@ -162,10 +170,12 @@ class WalletProvider extends ChangeNotifier {
     _wallets.removeWhere((w) => w.id == id);
     notifyListeners();
 
-    try {
-      await ApiService.instance.deleteWallet(id);
-    } catch (e) {
-      debugPrint('[WalletProvider] deleteWallet server error: $e');
+    if (!_isGuest) {
+      try {
+        await ApiService.instance.deleteWallet(id);
+      } catch (e) {
+        debugPrint('[WalletProvider] deleteWallet server error: $e');
+      }
     }
   }
 
@@ -235,18 +245,25 @@ class WalletProvider extends ChangeNotifier {
     await mutateBalance(toWalletId, amount);
 
     // 3. Fire-and-forget: push to server in background
-    ApiService.instance.storeTransfer(
-      fromWalletId: fromWalletId,
-      toWalletId: toWalletId,
-      amount: amount,
-      fee: fee > 0 ? fee : null,
-      transferDate: transferDate,
-      note: note,
-    ).then((_) {
-      debugPrint('[WalletProvider] Transfer synced to server: ${transfer.id}');
-    }).catchError((dynamic e) {
-      debugPrint('[WalletProvider] Transfer background sync failed: $e');
-      // Data stays in SQLite — will remain available locally.
-    });
+    if (!_isGuest) {
+      ApiService.instance
+          .storeTransfer(
+            fromWalletId: fromWalletId,
+            toWalletId: toWalletId,
+            amount: amount,
+            fee: fee > 0 ? fee : null,
+            transferDate: transferDate,
+            note: note,
+          )
+          .then((_) {
+            debugPrint(
+              '[WalletProvider] Transfer synced to server: ${transfer.id}',
+            );
+          })
+          .catchError((dynamic e) {
+            debugPrint('[WalletProvider] Transfer background sync failed: $e');
+            // Data stays in SQLite — will remain available locally.
+          });
+    }
   }
 }

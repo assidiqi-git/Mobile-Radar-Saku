@@ -20,6 +20,7 @@ class TransactionProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isLoggedIn = false;
+  bool _isGuest = false;
 
   List<TransactionModel> get transactions =>
       _transactions.where((t) => t.deletedAt == null).toList();
@@ -32,6 +33,7 @@ class TransactionProvider extends ChangeNotifier {
       transactions.take(5).toList();
 
   void updateAuth(AuthProvider auth) {
+    _isGuest = auth.isGuest;
     _isLoggedIn = auth.isAuthenticated || auth.isGuest;
     if (_isLoggedIn) {
       Future.microtask(() => loadAll());
@@ -162,6 +164,7 @@ class TransactionProvider extends ChangeNotifier {
 
   /// Fetch types and categories from server and persist locally.
   Future<void> fetchCategoriesFromServer() async {
+    if (_isGuest) return;
     try {
       final types = await ApiService.instance.getTransactionTypes();
       final cats = await ApiService.instance.getTransactionCategories();

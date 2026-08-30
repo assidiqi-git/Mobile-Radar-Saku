@@ -26,7 +26,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _currentIndex = 0;
   final PageController _balancePageController = PageController();
   int _balanceCardIndex = 0;
 
@@ -89,11 +88,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Hero Balance Card
               SliverToBoxAdapter(child: _buildBalanceCard()),
               // Weekly Expense Chart
-              SliverToBoxAdapter(child: _buildWeeklyExpenseChart()),
+              // SliverToBoxAdapter(child: _buildWeeklyExpenseChart()),
               // Empty Category Banner
               SliverToBoxAdapter(child: _buildEmptyCategoryBanner()),
               // Wallets Horizontal Scroll
-              // SliverToBoxAdapter(child: _buildWalletsSection()),
+              SliverToBoxAdapter(child: _buildWalletsSection()),
               // Pending Sync Banner
               SliverToBoxAdapter(child: _buildSyncBanner()),
               // Recent Transactions Header
@@ -112,12 +111,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, AppRouter.addTransaction),
-        child: const Icon(Icons.add_rounded),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
@@ -988,57 +981,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      type: BottomNavigationBarType.fixed,
-      onTap: (index) {
-        if (index == 0) {
-          // Already on dashboard — no-op
-          return;
-        }
-        if (index == 2) {
-          // Dummy item for FAB gap — no-op
-          return;
-        }
-
-        // Highlight the tapped tab temporarily while the route is open,
-        // then reset back to Beranda (0) when the user returns.
-        setState(() => _currentIndex = index);
-        final route = index == 1
-            ? AppRouter.allTransactions
-            : index == 3
-            ? AppRouter.wallets
-            : AppRouter.transfer;
-        Navigator.pushNamed(context, route).then((_) {
-          if (mounted) setState(() => _currentIndex = 0);
-        });
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard_rounded),
-          label: 'Beranda',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.receipt_long_rounded),
-          label: 'Transaksi',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(null), // Dummy icon for FAB space
-          label: '',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.account_balance_wallet_rounded),
-          label: 'Dompet',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.swap_horiz_rounded),
-          label: 'Transfer',
-        ),
-      ],
-    );
-  }
 }
 
 // --- Wallet Card Widget ---
@@ -1229,7 +1171,7 @@ class _TransactionListItem extends StatelessWidget {
             child: const Text('Hapus'),
           ),
           // Retry: re-open form with pre-filled data
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
               // TODO: navigate to edit form with pre-filled data

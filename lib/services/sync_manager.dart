@@ -27,6 +27,11 @@ class SyncManager {
   /// On 422: marks the batch records as [AppConstants.syncStatusError] (quarantine).
   /// On network error: silently returns 0 (will retry next time).
   Future<int> push() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(AppConstants.isGuestKey) ?? false) {
+      return 0;
+    }
+
     int offset = 0;
     int totalSynced = 0;
     const batchSize = AppConstants.syncBatchSize;
@@ -105,9 +110,15 @@ class SyncManager {
   /// Pull delta updates from the server and merge into local DB.
   /// Returns the number of records pulled.
   Future<int> pull() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(AppConstants.isGuestKey) ?? false) {
+      return 0;
+    }
+
     // Get last sync timestamp from meta table
-    final lastSyncedAt =
-        await _db.getSyncMetaValue(AppConstants.lastSyncedAtKey);
+    final lastSyncedAt = await _db.getSyncMetaValue(
+      AppConstants.lastSyncedAtKey,
+    );
 
     try {
       final serverTransactions = await _api.pullTransactions(
@@ -129,10 +140,12 @@ class SyncManager {
         );
 
         // Records from server are always marked as synced
-        final serverRow = tx.copyWith(
-          syncStatus: AppConstants.syncStatusSynced,
-          syncErrorMessage: null,
-        ).toMap();
+        final serverRow = tx
+            .copyWith(
+              syncStatus: AppConstants.syncStatusSynced,
+              syncErrorMessage: null,
+            )
+            .toMap();
 
         if (existing.isEmpty) {
           batch.insert(AppConstants.tableTransactions, serverRow);
@@ -159,7 +172,9 @@ class SyncManager {
       // Advance the last_synced_at cursor
       if (latestUpdatedAt != null) {
         await _db.setSyncMetaValue(
-            AppConstants.lastSyncedAtKey, latestUpdatedAt);
+          AppConstants.lastSyncedAtKey,
+          latestUpdatedAt,
+        );
       }
 
       return serverTransactions.length;

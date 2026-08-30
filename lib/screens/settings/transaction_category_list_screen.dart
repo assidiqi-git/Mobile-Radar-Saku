@@ -76,10 +76,12 @@ class _TransactionCategoryListScreenState
   }
 
   Future<void> _confirmDelete(
-      BuildContext context, TransactionCategoryModel cat) async {
+    BuildContext context,
+    TransactionCategoryModel cat,
+  ) async {
     final provider = context.read<TransactionCategoryProvider>();
     final messenger = ScaffoldMessenger.of(context);
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -87,7 +89,10 @@ class _TransactionCategoryListScreenState
         content: RichText(
           text: TextSpan(
             style: GoogleFonts.inter(
-                fontSize: 14, color: AppTheme.onSurface, height: 1.5),
+              fontSize: 14,
+              color: AppTheme.onSurface,
+              height: 1.5,
+            ),
             children: [
               const TextSpan(text: 'Hapus kategori '),
               TextSpan(
@@ -95,7 +100,8 @@ class _TransactionCategoryListScreenState
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const TextSpan(
-                text: '?\n\nJika masih ada transaksi yang menggunakan '
+                text:
+                    '?\n\nJika masih ada transaksi yang menggunakan '
                     'kategori ini, server akan menolak penghapusan (konflik 409).',
               ),
             ],
@@ -106,10 +112,12 @@ class _TransactionCategoryListScreenState
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Batal'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.expenseColor),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.expenseColor,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Hapus'),
           ),
         ],
@@ -185,7 +193,9 @@ class _TransactionCategoryListScreenState
                     // Section header
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 6),
+                        horizontal: 4,
+                        vertical: 6,
+                      ),
                       child: Row(
                         children: [
                           Container(
@@ -209,17 +219,19 @@ class _TransactionCategoryListScreenState
                       ),
                     ),
                     // Category items
-                    ...cats.map((cat) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _CategoryTile(
-                            category: cat,
-                            actionColor: _actionColor(action),
-                            actionBgColor: _actionBgColor(action),
-                            actionIcon: _actionIcon(action),
-                            onTap: () => _openForm(category: cat),
-                            onDelete: () => _confirmDelete(context, cat),
-                          ),
-                        )),
+                    ...cats.map(
+                      (cat) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _CategoryTile(
+                          category: cat,
+                          actionColor: _actionColor(action),
+                          actionBgColor: _actionBgColor(action),
+                          actionIcon: _actionIcon(action),
+                          onTap: () => _openForm(category: cat),
+                          onDelete: () => _confirmDelete(context, cat),
+                        ),
+                      ),
+                    ),
                   ],
                 );
               },
@@ -249,23 +261,29 @@ class _TransactionCategoryListScreenState
                 color: AppTheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.folder_special_outlined,
-                  size: 36, color: AppTheme.outline),
+              child: const Icon(
+                Icons.folder_special_outlined,
+                size: 36,
+                color: AppTheme.outline,
+              ),
             ),
             const SizedBox(height: 20),
             Text(
               'Belum Ada Kategori',
               style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.onSurface),
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.onSurface,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               'Ketuk tombol + untuk menambahkan\nkategori transaksi baru.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                  fontSize: 14, color: AppTheme.onSurfaceVariant),
+                fontSize: 14,
+                color: AppTheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -280,13 +298,17 @@ class _TransactionCategoryListScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline_rounded,
-                size: 40, color: AppTheme.error),
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 40,
+              color: AppTheme.error,
+            ),
             const SizedBox(height: 16),
-            Text(message,
-                textAlign: TextAlign.center,
-                style:
-                    GoogleFonts.inter(fontSize: 14, color: AppTheme.onSurface)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 14, color: AppTheme.onSurface),
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () =>
@@ -337,8 +359,10 @@ class _CategoryTile extends StatelessWidget {
           color: AppTheme.expenseColor.withOpacity(0.12),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.delete_outline_rounded,
-            color: AppTheme.expenseColor),
+        child: const Icon(
+          Icons.delete_outline_rounded,
+          color: AppTheme.expenseColor,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -386,15 +410,19 @@ class _CategoryTile extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: AppTheme.onSurfaceVariant),
+                            fontSize: 12,
+                            color: AppTheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded,
-                    size: 20, color: AppTheme.outline),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: AppTheme.outline,
+                ),
               ],
             ),
           ),

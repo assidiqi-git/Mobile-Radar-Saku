@@ -16,8 +16,7 @@ class TransactionTypeListScreen extends StatefulWidget {
       _TransactionTypeListScreenState();
 }
 
-class _TransactionTypeListScreenState
-    extends State<TransactionTypeListScreen> {
+class _TransactionTypeListScreenState extends State<TransactionTypeListScreen> {
   @override
   void initState() {
     super.initState();
@@ -77,9 +76,7 @@ class _TransactionTypeListScreenState
   Future<void> _openForm({TransactionTypeModel? type}) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (_) => TransactionTypeFormScreen(type: type),
-      ),
+      MaterialPageRoute(builder: (_) => TransactionTypeFormScreen(type: type)),
     );
     if (result == true && mounted) {
       context.read<TransactionTypeProvider>().loadAll();
@@ -87,10 +84,12 @@ class _TransactionTypeListScreenState
   }
 
   Future<void> _confirmDelete(
-      BuildContext context, TransactionTypeModel type) async {
+    BuildContext context,
+    TransactionTypeModel type,
+  ) async {
     final provider = context.read<TransactionTypeProvider>();
     final messenger = ScaffoldMessenger.of(context);
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -109,7 +108,8 @@ class _TransactionTypeListScreenState
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const TextSpan(
-                text: '?\n\nData akan ditandai untuk dihapus dan '
+                text:
+                    '?\n\nData akan ditandai untuk dihapus dan '
                     'disinkronkan ke server saat online.',
               ),
             ],
@@ -120,10 +120,12 @@ class _TransactionTypeListScreenState
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Batal'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style:
-                ElevatedButton.styleFrom(backgroundColor: AppTheme.expenseColor),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.expenseColor,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Hapus'),
           ),
         ],
@@ -216,23 +218,29 @@ class _TransactionTypeListScreenState
                 color: AppTheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.category_outlined,
-                  size: 36, color: AppTheme.outline),
+              child: const Icon(
+                Icons.category_outlined,
+                size: 36,
+                color: AppTheme.outline,
+              ),
             ),
             const SizedBox(height: 20),
             Text(
               'Belum Ada Tipe Transaksi',
               style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.onSurface),
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.onSurface,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               'Ketuk tombol + untuk menambahkan\ntipe transaksi baru.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                  fontSize: 14, color: AppTheme.onSurfaceVariant),
+                fontSize: 14,
+                color: AppTheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -247,13 +255,17 @@ class _TransactionTypeListScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline_rounded,
-                size: 40, color: AppTheme.error),
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 40,
+              color: AppTheme.error,
+            ),
             const SizedBox(height: 16),
-            Text(message,
-                textAlign: TextAlign.center,
-                style:
-                    GoogleFonts.inter(fontSize: 14, color: AppTheme.onSurface)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 14, color: AppTheme.onSurface),
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () =>
@@ -306,8 +318,10 @@ class _TypeTile extends StatelessWidget {
           color: AppTheme.expenseColor.withOpacity(0.12),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.delete_outline_rounded,
-            color: AppTheme.expenseColor),
+        child: const Icon(
+          Icons.delete_outline_rounded,
+          color: AppTheme.expenseColor,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -355,8 +369,9 @@ class _TypeTile extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: AppTheme.onSurfaceVariant),
+                            fontSize: 12,
+                            color: AppTheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ],
@@ -365,8 +380,10 @@ class _TypeTile extends StatelessWidget {
                 const SizedBox(width: 8),
                 // Action badge
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: actionBgColor,
                     borderRadius: BorderRadius.circular(20),
@@ -381,8 +398,11 @@ class _TypeTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right_rounded,
-                    size: 20, color: AppTheme.outline),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: AppTheme.outline,
+                ),
               ],
             ),
           ),

@@ -9,6 +9,8 @@ import '../screens/auth/register_screen.dart';
 import '../screens/auth/sync_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile/profile_sync_screen.dart';
+import '../screens/shell/main_shell.dart';
+import '../screens/summary/summary_screen.dart';
 import '../screens/transaction/add_transaction_screen.dart';
 import '../screens/transaction/all_transactions_screen.dart';
 import '../screens/transaction/transaction_detail_screen.dart';
@@ -20,7 +22,9 @@ class AppRouter {
   static const String login = '/login';
   static const String register = '/register';
   static const String initialSync = '/initial-sync';
+  static const String mainShell = '/main';
   static const String dashboard = '/dashboard';
+  static const String summary = '/summary';
   static const String addTransaction = '/add-transaction';
   static const String allTransactions = '/all-transactions';
   static const String transactionDetail = '/transaction-detail';
@@ -31,24 +35,28 @@ class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case splash:
-        return MaterialPageRoute(
-          builder: (ctx) => _SplashGate(),
-        );
+        return MaterialPageRoute(builder: (ctx) => _SplashGate());
       case login:
         return _slideRoute(const LoginScreen(), settings);
       case register:
         return _slideRoute(const RegisterScreen(), settings);
       case initialSync:
         return _fadeRoute(const SyncScreen(), settings);
-      case dashboard:
-        return _fadeRoute(const DashboardScreen(), settings);
+      case mainShell:
+      case dashboard: // backward compat — /dashboard juga masuk ke shell
+        return _fadeRoute(const MainShellScreen(), settings);
+      case summary:
+        return _fadeRoute(const SummaryScreen(), settings);
       case addTransaction:
         return _bottomSlideRoute(const AddTransactionScreen(), settings);
       case allTransactions:
         return _slideRoute(const AllTransactionsScreen(), settings);
       case transactionDetail:
         final id = settings.arguments as String;
-        return _slideRoute(TransactionDetailScreen(transactionId: id), settings);
+        return _slideRoute(
+          TransactionDetailScreen(transactionId: id),
+          settings,
+        );
       case wallets:
         return _slideRoute(const WalletsScreen(), settings);
       case transfer:
@@ -57,9 +65,8 @@ class AppRouter {
         return _slideRoute(const ProfileSyncScreen(), settings);
       default:
         return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(child: Text('Page not found')),
-          ),
+          builder: (_) =>
+              const Scaffold(body: Center(child: Text('Page not found'))),
         );
     }
   }
@@ -69,9 +76,10 @@ class AppRouter {
       settings: settings,
       pageBuilder: (_, __, ___) => page,
       transitionsBuilder: (_, animation, __, child) {
-        final tween =
-            Tween(begin: const Offset(1.0, 0.0), end: Offset.zero)
-                .chain(CurveTween(curve: Curves.easeInOut));
+        final tween = Tween(
+          begin: const Offset(1.0, 0.0),
+          end: Offset.zero,
+        ).chain(CurveTween(curve: Curves.easeInOut));
         return SlideTransition(position: animation.drive(tween), child: child);
       },
       transitionDuration: const Duration(milliseconds: 300),
@@ -94,9 +102,10 @@ class AppRouter {
       settings: settings,
       pageBuilder: (_, __, ___) => page,
       transitionsBuilder: (_, animation, __, child) {
-        final tween =
-            Tween(begin: const Offset(0.0, 1.0), end: Offset.zero)
-                .chain(CurveTween(curve: Curves.easeOut));
+        final tween = Tween(
+          begin: const Offset(0.0, 1.0),
+          end: Offset.zero,
+        ).chain(CurveTween(curve: Curves.easeOut));
         return SlideTransition(position: animation.drive(tween), child: child);
       },
       transitionDuration: const Duration(milliseconds: 350),
@@ -167,10 +176,6 @@ class _SplashGateState extends State<_SplashGate> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }
