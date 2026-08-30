@@ -72,6 +72,16 @@ class _WalletsScreenState extends State<WalletsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
+      appBar: AppBar(
+        title: const Text('Dompet Saya'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: () => context.read<WalletProvider>().fetchFromServer(),
+            tooltip: 'Muat ulang',
+          ),
+        ],
+      ),
       body: GestureDetector(
         onTap: _closeFab,
         behavior: HitTestBehavior.translucent,
@@ -83,34 +93,7 @@ class _WalletsScreenState extends State<WalletsScreen>
 
             final wallets = provider.wallets;
             return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Kelola',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppTheme.onSurfaceVariant,
-                          ),
-                        ),
-                        Text(
-                          'Dompet Saya',
-                          style: GoogleFonts.outfit(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 // Total balance
                 _buildTotalCard(provider.totalBalance),
                 // Wallet list

@@ -5,7 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../summary/summary_screen.dart';
 import '../transaction/all_transactions_screen.dart';
-import '../wallet/wallets_screen.dart';
+import '../profile/profile_sync_screen.dart';
 
 class MainShellScreen extends StatefulWidget {
   const MainShellScreen({super.key});
@@ -28,7 +28,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
     DashboardScreen(),
     SummaryScreen(),
     AllTransactionsScreen(),
-    WalletsScreen(),
+    ProfileSyncScreen(),
   ];
 
   @override
@@ -114,8 +114,8 @@ class _MainShellScreenState extends State<MainShellScreen> {
               label: 'Transaksi',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet_rounded),
-              label: 'Dompet',
+              icon: Icon(Icons.person_outline_rounded),
+              label: 'Profil',
             ),
           ],
         ),

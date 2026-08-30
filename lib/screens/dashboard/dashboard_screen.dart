@@ -139,23 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-          const Spacer(),
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, AppRouter.profile),
-            icon: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.person_outline_rounded,
-                color: AppTheme.primary,
-                size: 22,
-              ),
-            ),
-          ),
+          const SizedBox(width: 40),
         ],
       ),
     );

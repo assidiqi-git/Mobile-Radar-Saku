@@ -14,8 +14,6 @@ import '../../providers/transaction_provider.dart';
 import '../../providers/wallet_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/backup_restore_service.dart';
-import '../settings/transaction_category_list_screen.dart';
-import '../settings/transaction_type_list_screen.dart';
 
 class ProfileSyncScreen extends StatefulWidget {
   const ProfileSyncScreen({super.key});
@@ -685,17 +683,23 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
           ),
           _buildMenuTile(
             context,
+            icon: Icons.account_balance_wallet_rounded,
+            iconColor: AppTheme.incomeColor,
+            iconBgColor: AppTheme.incomeColor.withValues(alpha: 0.1),
+            label: 'Manajemen Dompet',
+            subtitle: 'Rekening bank, tunai, e-wallet, dll.',
+            onTap: () => Navigator.pushNamed(context, AppRouter.wallets),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _buildMenuTile(
+            context,
             icon: Icons.category_rounded,
             iconColor: AppTheme.secondary,
             iconBgColor: AppTheme.secondary.withOpacity(0.1),
             label: 'Manajemen Tipe Transaksi',
             subtitle: 'Pemasukan, pengeluaran, dll.',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const TransactionTypeListScreen(),
-              ),
-            ),
+            onTap: () =>
+                Navigator.pushNamed(context, AppRouter.transactionType),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
           _buildMenuTile(
@@ -705,12 +709,8 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
             iconBgColor: AppTheme.primary.withOpacity(0.1),
             label: 'Manajemen Kategori Transaksi',
             subtitle: 'Makan, belanja, gaji, dll.',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const TransactionCategoryListScreen(),
-              ),
-            ),
+            onTap: () =>
+                Navigator.pushNamed(context, AppRouter.transactionCategory),
           ),
         ],
       ),

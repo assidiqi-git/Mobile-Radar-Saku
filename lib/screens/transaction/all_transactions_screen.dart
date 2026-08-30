@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 
 import '../../core/app_router.dart';
 import '../../core/constants/app_constants.dart';
@@ -10,6 +11,21 @@ import '../../models/transaction.dart';
 import '../../providers/transaction_category_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/wallet_provider.dart';
+
+class FilterItem {
+  final String id;
+  final String label;
+  const FilterItem(this.id, this.label);
+
+  @override
+  String toString() => label;
+
+  @override
+  bool operator ==(Object other) => other is FilterItem && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
 
 class AllTransactionsScreen extends StatefulWidget {
   const AllTransactionsScreen({super.key});
@@ -72,7 +88,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
           children: [
             _buildAppBar(),
             _buildSearchBar(),
-            _buildFilterChips(),
+            _buildFilterDropdowns(),
             if (_dateRange != null) _buildDateRangeBadge(),
             Expanded(child: _buildTransactionList()),
           ],
@@ -85,7 +101,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
   Widget _buildAppBar() {
     return Container(
-      color: AppTheme.surfaceContainerLowest,
       padding: const EdgeInsets.fromLTRB(20, 24, 8, 16),
       child: Row(
         children: [
@@ -147,9 +162,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   // ── Search Bar ─────────────────────────────────────────────────────────────
 
   Widget _buildSearchBar() {
-    return Container(
-      color: AppTheme.surfaceContainerLowest,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
       child: TextField(
         controller: _searchController,
         onChanged: (v) => setState(() => _searchText = v),
@@ -191,155 +205,162 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
     );
   }
 
-  // ── Filter Chips ───────────────────────────────────────────────────────────
-
-  Widget _buildFilterChips() {
-    final wallets = context.watch<WalletProvider>().wallets;
-
-    return Container(
-      color: AppTheme.surfaceContainerLowest,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
-          // 1. Baris Jenis Transaksi
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-            child: Row(
-              children: [
-                _ActionChip(
-                  label: 'Semua Transaksi',
-                  isSelected: _selectedAction == null,
-                  onTap: () => setState(() => _selectedAction = null),
-                ),
-                const SizedBox(width: 8),
-                _ActionChip(
-                  label: 'Pemasukan',
-                  icon: Icons.arrow_downward_rounded,
-                  iconColor: AppTheme.incomeColor,
-                  isSelected: _selectedAction == AppConstants.actionAddition,
-                  onTap: () => setState(() {
-                    _selectedAction =
-                        _selectedAction == AppConstants.actionAddition
-                        ? null
-                        : AppConstants.actionAddition;
-                    _selectedCategoryId =
-                        null; // reset category on action change
-                  }),
-                ),
-                const SizedBox(width: 8),
-                _ActionChip(
-                  label: 'Pengeluaran',
-                  icon: Icons.arrow_upward_rounded,
-                  iconColor: AppTheme.expenseColor,
-                  isSelected: _selectedAction == AppConstants.actionDeduction,
-                  onTap: () => setState(() {
-                    _selectedAction =
-                        _selectedAction == AppConstants.actionDeduction
-                        ? null
-                        : AppConstants.actionDeduction;
-                    _selectedCategoryId =
-                        null; // reset category on action change
-                  }),
-                ),
-                const SizedBox(width: 8),
-                _ActionChip(
-                  label: 'Netral',
-                  icon: Icons.remove_rounded,
-                  iconColor: AppTheme.secondary,
-                  isSelected: _selectedAction == AppConstants.actionNeutral,
-                  onTap: () => setState(() {
-                    _selectedAction =
-                        _selectedAction == AppConstants.actionNeutral
-                        ? null
-                        : AppConstants.actionNeutral;
-                    _selectedCategoryId =
-                        null; // reset category on action change
-                  }),
-                ),
-              ],
-            ),
-          ),
-          // 2. Baris Dompet (jika ada)
-          if (wallets.isNotEmpty)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-              child: Row(
-                children: [
-                  _ActionChip(
-                    label: 'Semua Dompet',
-                    isSelected: _selectedWalletId == null,
-                    onTap: () => setState(() => _selectedWalletId = null),
-                  ),
-                  const SizedBox(width: 8),
-                  ...wallets.map(
-                    (w) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _ActionChip(
-                        label: w.name,
-                        icon: Icons.account_balance_wallet_rounded,
-                        isSelected: _selectedWalletId == w.id,
-                        onTap: () => setState(
-                          () => _selectedWalletId = _selectedWalletId == w.id
-                              ? null
-                              : w.id,
-                        ),
+  // ── Filter Dropdowns ───────────────────────────────────────────────────────
+  Widget _buildDropdown2({
+    required FilterItem selectedItem,
+    required List<FilterItem> items,
+    required ValueChanged<FilterItem?> onChanged,
+    required double width,
+  }) {
+    return SizedBox(
+      width: width,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton2<FilterItem>(
+          isExpanded: true,
+          valueListenable: ValueNotifier(selectedItem),
+          items: items
+              .map((item) => DropdownItem<FilterItem>(
+                    value: item,
+                    height: 40, // Height is now set on the DropdownItem itself
+                    child: Text(
+                      item.label,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppTheme.onSurface,
+                        fontWeight: FontWeight.w500,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ))
+              .toList(),
+          onChanged: onChanged,
+          buttonStyleData: ButtonStyleData(
+            height: 40,
+            padding: const EdgeInsets.only(left: 16, right: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.outlineVariant.withValues(alpha: 0.3),
               ),
             ),
-          // 3. Baris Kategori (jika ada)
-          if (wallets.isNotEmpty) const SizedBox(height: 4),
-          Consumer<TransactionCategoryProvider>(
-            builder: (context, catProvider, _) {
-              final allCategories = catProvider.categories;
-              final filteredCategories = _selectedAction == null
-                  ? allCategories
-                  : allCategories
-                        .where(
-                          (c) => c.transactionType?.action == _selectedAction,
-                        )
-                        .toList();
-
-              if (filteredCategories.isEmpty) {
-                return const SizedBox(height: 6);
-              }
-
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                child: Row(
-                  children: [
-                    _ActionChip(
-                      label: 'Semua Kategori',
-                      isSelected: _selectedCategoryId == null,
-                      onTap: () => setState(() => _selectedCategoryId = null),
-                    ),
-                    const SizedBox(width: 8),
-                    ...filteredCategories.map(
-                      (c) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _ActionChip(
-                          label: c.name,
-                          icon: Icons.category_rounded,
-                          isSelected: _selectedCategoryId == c.id,
-                          onTap: () => setState(
-                            () => _selectedCategoryId =
-                                _selectedCategoryId == c.id ? null : c.id,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
           ),
-        ],
+          iconStyleData: const IconStyleData(
+            icon: Icon(Icons.arrow_drop_down_rounded),
+            iconSize: 20,
+            iconEnabledColor: AppTheme.outline,
+          ),
+          dropdownStyleData: DropdownStyleData(
+            maxHeight: 200,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              color: AppTheme.surfaceContainerLowest,
+            ),
+            offset: const Offset(0, -4),
+          ),
+          menuItemStyleData: const MenuItemStyleData(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Filter Dropdowns ───────────────────────────────────────────────────────
+
+  Widget _buildFilterDropdowns() {
+    final wallets = context.watch<WalletProvider>().wallets;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      child: Consumer<TransactionCategoryProvider>(
+        builder: (context, catProvider, _) {
+          final allCategories = catProvider.categories;
+          final filteredCategories = _selectedAction == null
+              ? allCategories
+              : allCategories
+                  .where((c) => c.transactionType?.action == _selectedAction)
+                  .toList();
+
+          // 1. Jenis Transaksi
+          final jenisItems = const [
+            FilterItem('all', 'Semua Transaksi'),
+            FilterItem(AppConstants.actionAddition, 'Pemasukan'),
+            FilterItem(AppConstants.actionDeduction, 'Pengeluaran'),
+            FilterItem(AppConstants.actionNeutral, 'Netral'),
+          ];
+          final selectedJenis = jenisItems.firstWhere(
+            (item) => item.id == (_selectedAction ?? 'all'),
+            orElse: () => jenisItems.first,
+          );
+
+          // 2. Dompet
+          final dompetItems = [
+            const FilterItem('all', 'Semua Dompet'),
+            ...wallets.map((w) => FilterItem(w.id, w.name)),
+          ];
+          final selectedDompet = dompetItems.firstWhere(
+            (item) => item.id == (_selectedWalletId ?? 'all'),
+            orElse: () => dompetItems.first,
+          );
+
+          // 3. Kategori
+          final kategoriItems = [
+            const FilterItem('all', 'Semua Kategori'),
+            ...filteredCategories.map((c) => FilterItem(c.id, c.name)),
+          ];
+          final selectedKategori = kategoriItems.firstWhere(
+            (item) => item.id == (_selectedCategoryId ?? 'all'),
+            orElse: () => kategoriItems.first,
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Jenis
+              _buildDropdown2(
+                width: double.infinity,
+                selectedItem: selectedJenis,
+                items: jenisItems,
+                onChanged: (val) {
+                  if (val == null) return;
+                  setState(() {
+                    _selectedAction = val.id == 'all' ? null : val.id;
+                    _selectedCategoryId = null;
+                  });
+                },
+              ),
+              // Dompet
+              if (wallets.isNotEmpty) const SizedBox(height: 12),
+              if (wallets.isNotEmpty)
+                _buildDropdown2(
+                  width: double.infinity,
+                  selectedItem: selectedDompet,
+                  items: dompetItems,
+                  onChanged: (val) {
+                    if (val == null) return;
+                    setState(() {
+                      _selectedWalletId = val.id == 'all' ? null : val.id;
+                    });
+                  },
+                ),
+              // Kategori
+              if (filteredCategories.isNotEmpty) const SizedBox(height: 12),
+              if (filteredCategories.isNotEmpty)
+                _buildDropdown2(
+                  width: double.infinity,
+                  selectedItem: selectedKategori,
+                  items: kategoriItems,
+                  onChanged: (val) {
+                    if (val == null) return;
+                    setState(() {
+                      _selectedCategoryId = val.id == 'all' ? null : val.id;
+                    });
+                  },
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -412,7 +433,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
           itemCount: groupedItems.length,
           itemBuilder: (_, i) {
             final item = groupedItems[i];
@@ -503,69 +524,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                 style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Filter Chip Component ───────────────────────────────────────────────────
-
-class _ActionChip extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final Color? iconColor;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _ActionChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.icon,
-    this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.primary
-              : AppTheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? AppTheme.primary
-                : AppTheme.outline.withOpacity(0.3),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 13,
-                color: isSelected
-                    ? Colors.white
-                    : (iconColor ?? AppTheme.onSurfaceVariant),
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
-              ),
-            ),
           ],
         ),
       ),
@@ -716,3 +674,5 @@ class _TransactionItem extends StatelessWidget {
     );
   }
 }
+
+

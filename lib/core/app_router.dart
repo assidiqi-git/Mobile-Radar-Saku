@@ -9,6 +9,8 @@ import '../screens/auth/register_screen.dart';
 import '../screens/auth/sync_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/profile/profile_sync_screen.dart';
+import '../screens/settings/transaction_category_list_screen.dart';
+import '../screens/settings/transaction_type_list_screen.dart';
 import '../screens/shell/main_shell.dart';
 import '../screens/summary/summary_screen.dart';
 import '../screens/transaction/add_transaction_screen.dart';
@@ -31,6 +33,8 @@ class AppRouter {
   static const String wallets = '/wallets';
   static const String transfer = '/transfer';
   static const String profile = '/profile';
+  static const String transactionType = '/transaction-type';
+  static const String transactionCategory = '/transaction-category';
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -63,6 +67,10 @@ class AppRouter {
         return _slideRoute(const TransferScreen(), settings);
       case profile:
         return _slideRoute(const ProfileSyncScreen(), settings);
+      case transactionType:
+        return _slideRoute(const TransactionTypeListScreen(), settings);
+      case transactionCategory:
+        return _slideRoute(const TransactionCategoryListScreen(), settings);
       default:
         return MaterialPageRoute(
           builder: (_) =>
