@@ -47,10 +47,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     String displayAmount = formattedAmount;
     Color amountColor = AppTheme.onSurface;
     if (action == AppConstants.actionAddition) {
-      displayAmount = '+ $formattedAmount';
       amountColor = AppTheme.incomeColor;
     } else if (action == AppConstants.actionDeduction) {
-      displayAmount = '- $formattedAmount';
       amountColor = AppTheme.expenseColor;
     }
 

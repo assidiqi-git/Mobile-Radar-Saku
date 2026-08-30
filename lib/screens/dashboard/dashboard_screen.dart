@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -26,6 +27,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
+  final PageController _balancePageController = PageController();
+  int _balanceCardIndex = 0;
 
   @override
   void initState() {
@@ -33,6 +36,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
+  }
+
+  @override
+  void dispose() {
+    _balancePageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -79,10 +88,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               SliverToBoxAdapter(child: _buildHeader()),
               // Hero Balance Card
               SliverToBoxAdapter(child: _buildBalanceCard()),
+              // Weekly Expense Chart
+              SliverToBoxAdapter(child: _buildWeeklyExpenseChart()),
               // Empty Category Banner
               SliverToBoxAdapter(child: _buildEmptyCategoryBanner()),
               // Wallets Horizontal Scroll
-              SliverToBoxAdapter(child: _buildWalletsSection()),
+              // SliverToBoxAdapter(child: _buildWalletsSection()),
               // Pending Sync Banner
               SliverToBoxAdapter(child: _buildSyncBanner()),
               // Recent Transactions Header
@@ -158,80 +169,213 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildBalanceCard() {
-    return Consumer<WalletProvider>(
-      builder: (context, walletProvider, _) {
+    return Consumer2<WalletProvider, TransactionProvider>(
+      builder: (context, walletProvider, txProvider, _) {
         final totalBalance = walletProvider.totalBalance;
-        return Container(
-          margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppTheme.primaryContainer, AppTheme.primary],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primary.withOpacity(0.35),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+
+        // Hitung total pengeluaran bulan berjalan
+        final now = DateTime.now();
+        final monthStart = DateTime(now.year, now.month, 1);
+        final monthEnd = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+        final monthlyExpense = txProvider.transactions
+            .where((t) {
+              if (!t.isExpense) return false;
+              final date = DateTime.tryParse(t.createdAt ?? '');
+              if (date == null) return false;
+              return !date.isBefore(monthStart) && !date.isAfter(monthEnd);
+            })
+            .fold<double>(0, (sum, t) => sum + t.amountDouble);
+
+        return Column(
+          children: [
+            SizedBox(
+              height: 165,
+              child: PageView(
+                controller: _balancePageController,
+                clipBehavior: Clip.none,
+                onPageChanged: (index) =>
+                    setState(() => _balanceCardIndex = index),
                 children: [
-                  const Icon(
-                    Icons.account_balance_wallet_rounded,
-                    color: Colors.white54,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Total Saldo',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Consumer<SyncProvider>(
-                      builder: (_, sync, __) => Row(
-                        children: [
-                          Icon(
-                            sync.hasPending
-                                ? Icons.sync_problem_rounded
-                                : Icons.check_circle_rounded,
-                            color: Colors.white70,
-                            size: 13,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // --- Card 1: Total Saldo ---
+                  _buildTotalSaldoCard(totalBalance),
+                  // --- Card 2: Total Pengeluaran Bulan Ini ---
+                  _buildTotalPengeluaranCard(monthlyExpense, now),
                 ],
               ),
-              const SizedBox(height: 12),
+            ),
+            const SizedBox(height: 10),
+            // Dot indicator
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(2, (index) {
+                final isActive = index == _balanceCardIndex;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: isActive ? 18 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? AppTheme.primary
+                        : AppTheme.primary.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                );
+              }),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTotalSaldoCard(double totalBalance) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.primaryContainer, AppTheme.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.45),
+            blurRadius: 16,
+            spreadRadius: 0,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.account_balance_wallet_rounded,
+                color: Colors.white54,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
               Text(
-                CurrencyFormatter.format(totalBalance),
-                style: AppTheme.balanceLarge,
+                'Total Saldo',
+                style: GoogleFonts.inter(fontSize: 13, color: Colors.white70),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Consumer<SyncProvider>(
+                  builder: (_, sync, __) => Row(
+                    children: [
+                      Icon(
+                        sync.hasPending
+                            ? Icons.sync_problem_rounded
+                            : Icons.check_circle_rounded,
+                        color: Colors.white70,
+                        size: 13,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 12),
+          Text(
+            CurrencyFormatter.format(totalBalance),
+            style: AppTheme.balanceLarge,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalPengeluaranCard(double totalExpense, DateTime now) {
+    final monthNames = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    final monthLabel = '${monthNames[now.month - 1]} ${now.year}';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF7F1D1D), Color(0xFFDC2626)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFDC2626).withOpacity(0.45),
+            blurRadius: 16,
+            spreadRadius: 0,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.trending_down_rounded,
+                color: Colors.white54,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Pengeluaran Bulan Ini',
+                style: GoogleFonts.inter(fontSize: 13, color: Colors.white70),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  monthLabel,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            CurrencyFormatter.format(totalExpense),
+            style: AppTheme.balanceLarge,
+          ),
+        ],
+      ),
     );
   }
 
@@ -256,6 +400,238 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildWeeklyExpenseChart() {
+    return Consumer<TransactionProvider>(
+      builder: (context, txProvider, _) {
+        final now = DateTime.now();
+        // Mulai dari Senin minggu berjalan
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        final weekStart = DateTime(
+          startOfWeek.year,
+          startOfWeek.month,
+          startOfWeek.day,
+        );
+
+        // Hitung pengeluaran per hari (Sen-Min)
+        final List<double> dailyExpense = List.generate(7, (i) {
+          final day = weekStart.add(Duration(days: i));
+          final dayEnd = DateTime(day.year, day.month, day.day, 23, 59, 59);
+          return txProvider.transactions
+              .where((t) {
+                if (!t.isExpense) return false;
+                final date = DateTime.tryParse(t.createdAt ?? '');
+                if (date == null) return false;
+                return !date.isBefore(day) && !date.isAfter(dayEnd);
+              })
+              .fold<double>(0, (sum, t) => sum + t.amountDouble);
+        });
+
+        final totalWeek = dailyExpense.fold<double>(0, (a, b) => a + b);
+        final maxVal = dailyExpense.reduce((a, b) => a > b ? a : b);
+
+        // Hitung % perubahan vs minggu lalu
+        final lastWeekStart = weekStart.subtract(const Duration(days: 7));
+        final totalLastWeek = List.generate(7, (i) {
+          final day = lastWeekStart.add(Duration(days: i));
+          final dayEnd = DateTime(day.year, day.month, day.day, 23, 59, 59);
+          return txProvider.transactions
+              .where((t) {
+                if (!t.isExpense) return false;
+                final date = DateTime.tryParse(t.createdAt ?? '');
+                if (date == null) return false;
+                return !date.isBefore(day) && !date.isAfter(dayEnd);
+              })
+              .fold<double>(0, (sum, t) => sum + t.amountDouble);
+        }).fold<double>(0, (a, b) => a + b);
+
+        double? changePercent;
+        if (totalLastWeek > 0) {
+          changePercent = ((totalWeek - totalLastWeek) / totalLastWeek) * 100;
+        }
+
+        final dayLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+        final todayIndex = now.weekday - 1; // 0=Sen, 6=Min
+
+        return Container(
+          margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Text(
+                'Pengeluaran Minggu Ini',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppTheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    CurrencyFormatter.format(totalWeek),
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (changePercent != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: changePercent <= 0
+                            ? AppTheme.incomeColor.withOpacity(0.12)
+                            : AppTheme.expenseColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            changePercent <= 0
+                                ? Icons.arrow_downward_rounded
+                                : Icons.arrow_upward_rounded,
+                            size: 11,
+                            color: changePercent <= 0
+                                ? AppTheme.incomeColor
+                                : AppTheme.expenseColor,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${changePercent.abs().toStringAsFixed(1)}%',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: changePercent <= 0
+                                  ? AppTheme.incomeColor
+                                  : AppTheme.expenseColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Bar Chart
+              SizedBox(
+                height: 130,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: maxVal > 0 ? maxVal * 1.3 : 10,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipColor: (_) =>
+                            AppTheme.onSurface.withOpacity(0.85),
+                        tooltipPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          if (rod.toY == 0) return null;
+                          return BarTooltipItem(
+                            CurrencyFormatter.compact(rod.toY),
+                            GoogleFonts.inter(
+                              fontSize: 10,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 24,
+                          getTitlesWidget: (value, meta) {
+                            final i = value.toInt();
+                            final isToday = i == todayIndex;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                dayLabels[i],
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: isToday
+                                      ? FontWeight.w700
+                                      : FontWeight.w400,
+                                  color: isToday
+                                      ? AppTheme.primary
+                                      : AppTheme.onSurfaceVariant,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    barGroups: List.generate(7, (i) {
+                      final isToday = i == todayIndex;
+                      final val = dailyExpense[i];
+                      return BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          BarChartRodData(
+                            toY: val,
+                            width: 28,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(8),
+                            ),
+                            gradient: LinearGradient(
+                              colors: isToday
+                                  ? [
+                                      AppTheme.primaryContainer,
+                                      AppTheme.primary,
+                                    ]
+                                  : [
+                                      AppTheme.surfaceContainerLow,
+                                      AppTheme.outline.withOpacity(0.4),
+                                    ],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
