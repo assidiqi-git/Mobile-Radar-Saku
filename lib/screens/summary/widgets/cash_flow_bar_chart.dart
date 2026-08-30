@@ -75,126 +75,133 @@ class CashFlowBarChart extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 32),
-          AspectRatio(
-            aspectRatio: 1.5,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: maxY,
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final isIncome = rodIndex == 0;
-                      return BarTooltipItem(
-                        '${isIncome ? 'Pemasukan' : 'Pengeluaran'}\n',
-                        GoogleFonts.inter(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                        children: <TextSpan>[
-                          TextSpan(
-                            text: CurrencyFormatter.format(rod.toY),
-                            style: GoogleFonts.jetBrainsMono(
-                              color: isIncome
-                                  ? const Color(0xFF6EE7B7)
-                                  : const Color(0xFFFDA4AF),
+          SizedBox(
+            height: 240,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: SizedBox(
+                width:
+                    data.length * 55.0 < MediaQuery.of(context).size.width - 80
+                    ? MediaQuery.of(context).size.width - 80
+                    : data.length * 55.0,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: maxY,
+                    barTouchData: BarTouchData(
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          final isIncome = rodIndex == 0;
+                          return BarTooltipItem(
+                            '${isIncome ? 'Pemasukan' : 'Pengeluaran'}\n',
+                            GoogleFonts.inter(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                            ),
+                            children: <TextSpan>[
+                              TextSpan(
+                                text: CurrencyFormatter.format(rod.toY),
+                                style: GoogleFonts.jetBrainsMono(
+                                  color: isIncome
+                                      ? const Color(0xFF6EE7B7)
+                                      : const Color(0xFFFDA4AF),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            if (value.toInt() >= data.length ||
+                                value.toInt() < 0) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                data[value.toInt()].label,
+                                style: GoogleFonts.inter(
+                                  color: AppTheme.onSurfaceVariant,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            );
+                          },
+                          reservedSize: 28,
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            if (value == 0) return const SizedBox.shrink();
+                            return Text(
+                              _formatAxisValue(value),
+                              style: GoogleFonts.inter(
+                                color: AppTheme.onSurfaceVariant,
+                                fontSize: 10,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: maxY / 4 == 0 ? 1 : maxY / 4,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: AppTheme.outlineVariant.withValues(alpha: 0.3),
+                          strokeWidth: 1,
+                          dashArray: [4, 4],
+                        );
+                      },
+                    ),
+                    barGroups: List.generate(data.length, (i) {
+                      return BarChartGroupData(
+                        x: i,
+                        barsSpace: 4,
+                        barRods: [
+                          BarChartRodData(
+                            toY: data[i].income,
+                            color: AppTheme.incomeColor,
+                            width: 8,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4),
+                            ),
+                          ),
+                          BarChartRodData(
+                            toY: data[i].expense,
+                            color: AppTheme.expenseColor,
+                            width: 8,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4),
                             ),
                           ),
                         ],
                       );
-                    },
+                    }),
                   ),
                 ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index >= 0 && index < data.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              data[index].label,
-                              style: GoogleFonts.inter(
-                                color: AppTheme.outline,
-                                fontSize: 11,
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 45,
-                      getTitlesWidget: (value, meta) {
-                        if (value == 0 || value == maxY)
-                          return const SizedBox.shrink();
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: Text(
-                            _formatAxisValue(value),
-                            textAlign: TextAlign.right,
-                            style: GoogleFonts.jetBrainsMono(
-                              color: AppTheme.outline,
-                              fontSize: 10,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  checkToShowHorizontalLine: (value) => value % (maxY / 4) < 1,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppTheme.outlineVariant.withValues(alpha: 0.2),
-                    strokeWidth: 1,
-                    dashArray: [4, 4],
-                  ),
-                  drawVerticalLine: false,
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: List.generate(data.length, (i) {
-                  return BarChartGroupData(
-                    x: i,
-                    barsSpace: 4,
-                    barRods: [
-                      BarChartRodData(
-                        toY: data[i].income,
-                        color: AppTheme.incomeColor,
-                        width: 8,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(4),
-                        ),
-                      ),
-                      BarChartRodData(
-                        toY: data[i].expense,
-                        color: AppTheme.expenseColor,
-                        width: 8,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(4),
-                        ),
-                      ),
-                    ],
-                  );
-                }),
               ),
             ),
           ),

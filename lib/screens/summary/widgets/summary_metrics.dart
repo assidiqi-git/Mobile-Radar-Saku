@@ -7,11 +7,17 @@ import '../../../core/utils/formatters.dart';
 class SummaryMetrics extends StatelessWidget {
   final double totalIncome;
   final double totalExpense;
+  final double? changePercent;
+  final double? incomeChangePercent;
+  final double? expenseChangePercent;
 
   const SummaryMetrics({
     super.key,
     required this.totalIncome,
     required this.totalExpense,
+    this.changePercent,
+    this.incomeChangePercent,
+    this.expenseChangePercent,
   });
 
   double get netFlow => totalIncome - totalExpense;
@@ -42,6 +48,8 @@ class SummaryMetrics extends StatelessWidget {
                   amount: totalIncome,
                   color: AppTheme.incomeColor,
                   icon: Icons.arrow_downward_rounded,
+                  changePercent: incomeChangePercent,
+                  isInverse: false,
                 ),
               ),
               Container(
@@ -55,6 +63,8 @@ class SummaryMetrics extends StatelessWidget {
                   amount: totalExpense,
                   color: AppTheme.expenseColor,
                   icon: Icons.arrow_upward_rounded,
+                  changePercent: expenseChangePercent,
+                  isInverse: true,
                 ),
               ),
             ],
@@ -62,21 +72,66 @@ class SummaryMetrics extends StatelessWidget {
           const SizedBox(height: 16),
           const Divider(height: 1),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
             children: [
-              Text(
-                'Arus Kas Bersih',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.onSurfaceVariant,
-                ),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                children: [
+                  Text(
+                    'Arus Kas Bersih',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.onSurfaceVariant,
+                    ),
+                  ),
+                  if (changePercent != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: changePercent! >= 0
+                            ? AppTheme.incomeColor.withValues(alpha: 0.12)
+                            : AppTheme.expenseColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            changePercent! >= 0
+                                ? Icons.arrow_upward_rounded
+                                : Icons.arrow_downward_rounded,
+                            size: 11,
+                            color: changePercent! >= 0
+                                ? AppTheme.incomeColor
+                                : AppTheme.expenseColor,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${changePercent!.abs().toStringAsFixed(1)}%',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: changePercent! >= 0
+                                  ? AppTheme.incomeColor
+                                  : AppTheme.expenseColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
+              const SizedBox(height: 8),
               Text(
                 CurrencyFormatter.format(netFlow),
                 style: AppTheme.monoStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: netFlow >= 0
                       ? AppTheme.incomeColor
@@ -95,11 +150,22 @@ class SummaryMetrics extends StatelessWidget {
     required double amount,
     required Color color,
     required IconData icon,
+    double? changePercent,
+    bool isInverse = false,
   }) {
+    final bool isGood = changePercent == null
+        ? true
+        : (isInverse ? changePercent <= 0 : changePercent >= 0);
+    final Color badgeColor = isGood
+        ? AppTheme.incomeColor
+        : AppTheme.expenseColor;
+    final bool isUp = (changePercent ?? 0) >= 0;
+
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Icon(icon, size: 14, color: color),
             const SizedBox(width: 4),
@@ -110,6 +176,37 @@ class SummaryMetrics extends StatelessWidget {
                 color: AppTheme.onSurfaceVariant,
               ),
             ),
+            if (changePercent != null) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isUp
+                          ? Icons.arrow_upward_rounded
+                          : Icons.arrow_downward_rounded,
+                      size: 10,
+                      color: badgeColor,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      changePercent.abs().toStringAsFixed(1) + '%',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: badgeColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 8),

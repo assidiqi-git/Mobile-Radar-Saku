@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_theme.dart';
 
-enum SummaryPeriod { today, week, month, year, all }
+enum SummaryPeriod { all, today, week, month, year }
 
 class PeriodFilter extends StatelessWidget {
   final SummaryPeriod selectedPeriod;

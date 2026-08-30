@@ -110,6 +110,76 @@ class _SummaryScreenState extends State<SummaryScreen> {
           );
           final top5Expenses = expenseTransactions.take(5).toList();
 
+          double? netCashChangePercent;
+          double? incomeChangePercent;
+          double? expenseChangePercent;
+          
+          final now = DateTime.now();
+          DateTime? prevStart;
+          DateTime? prevEnd;
+          
+          switch (_selectedPeriod) {
+            case SummaryPeriod.today:
+              prevStart = DateTime(now.year, now.month, now.day - 1);
+              prevEnd = DateTime(now.year, now.month, now.day - 1, 23, 59, 59);
+              break;
+            case SummaryPeriod.week:
+              final weekday = now.weekday;
+              prevStart = DateTime(now.year, now.month, now.day - weekday + 1 - 7);
+              prevEnd = prevStart.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+              break;
+            case SummaryPeriod.month:
+              prevStart = DateTime(now.year, now.month - 1, 1);
+              prevEnd = DateTime(now.year, now.month, 0, 23, 59, 59);
+              break;
+            case SummaryPeriod.year:
+              prevStart = DateTime(now.year - 1, 1, 1);
+              prevEnd = DateTime(now.year - 1, 12, 31, 23, 59, 59);
+              break;
+            case SummaryPeriod.all:
+              break;
+          }
+
+          if (prevStart != null && prevEnd != null) {
+            double prevIncome = 0;
+            double prevExpense = 0;
+
+            for (final tx in allTransactions) {
+              final date = DateTime.tryParse(tx.createdAt ?? '') ?? now;
+              if (date.isAfter(prevStart) && date.isBefore(prevEnd)) {
+                final amount = tx.amountDouble;
+                final action = tx.transactionCategory?.transactionType?.action;
+                if (action == AppConstants.actionAddition) {
+                  prevIncome += amount;
+                } else if (action == AppConstants.actionDeduction) {
+                  prevExpense += amount;
+                }
+              }
+            }
+
+            final prevNetCash = prevIncome - prevExpense;
+            final currentNetCash = totalIncome - totalExpense;
+
+            if (prevNetCash != 0) {
+              netCashChangePercent = ((currentNetCash - prevNetCash) / prevNetCash.abs()) * 100;
+            } else if (currentNetCash != 0) {
+              netCashChangePercent = currentNetCash > 0 ? 100.0 : -100.0;
+            }
+            
+            if (prevIncome != 0) {
+              incomeChangePercent = ((totalIncome - prevIncome) / prevIncome.abs()) * 100;
+            } else if (totalIncome != 0) {
+              incomeChangePercent = 100.0;
+            }
+            
+            if (prevExpense != 0) {
+              expenseChangePercent = ((totalExpense - prevExpense) / prevExpense.abs()) * 100;
+            } else if (totalExpense != 0) {
+              expenseChangePercent = 100.0;
+            }
+          }
+
+
           return CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -162,6 +232,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 child: SummaryMetrics(
                   totalIncome: totalIncome,
                   totalExpense: totalExpense,
+                  changePercent: netCashChangePercent,
+                  incomeChangePercent: incomeChangePercent,
+                  expenseChangePercent: expenseChangePercent,
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
