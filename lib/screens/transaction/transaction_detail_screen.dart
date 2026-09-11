@@ -55,6 +55,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final isIncome = action == AppConstants.actionAddition;
     final isExpense = action == AppConstants.actionDeduction;
 
+    // Prefix tanda: + pemasukan, - pengeluaran, ~ netral
+    final String amountPrefix = isIncome ? '+' : isExpense ? '-' : '~';
+
     final IconData actionIcon = tx.hasError
         ? Icons.error_outline_rounded
         : isIncome
@@ -96,7 +99,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           children: [
             // Nominal Section
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 24),
+              padding: const EdgeInsets.symmetric(vertical: 24,horizontal: 24),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -108,39 +111,38 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   ),
                 ],
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 24),
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: actionColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              actionIcon,
-                              color: actionColor,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        displayAmount,
+                  // Icon besar di tengah atas
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: actionColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      actionIcon,
+                      color: actionColor,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Nominal dengan FittedBox — tidak pernah overflow
+                  Expanded(
+                    // padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '$displayAmount',
                         style: AppTheme.monoStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
                           color: amountColor,
                         ),
                       ),
-                    ],
+                    ),
                   ),
                   if (!isGuest) ...[
                     const SizedBox(height: 16),

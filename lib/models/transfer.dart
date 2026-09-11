@@ -110,4 +110,37 @@ class TransferModel {
         'updated_at': updatedAt,
         'deleted_at': deletedAt,
       };
+
+  TransferModel copyWith({
+    String? id,
+    String? fromWalletId,
+    String? toWalletId,
+    String? amount,
+    String? fee,
+    String? transferDate,
+    String? note,
+    String? syncStatus,
+    String? syncErrorMessage,
+    String? createdAt,
+    String? updatedAt,
+    String? deletedAt,
+    WalletModel? fromWallet,
+    WalletModel? toWallet,
+  }) =>
+      TransferModel(
+        id: id ?? this.id,
+        fromWalletId: fromWalletId ?? this.fromWalletId,
+        toWalletId: toWalletId ?? this.toWalletId,
+        amount: amount ?? this.amount,
+        fee: fee ?? this.fee,
+        transferDate: transferDate ?? this.transferDate,
+        note: note ?? this.note,
+        syncStatus: syncStatus ?? this.syncStatus,
+        syncErrorMessage: syncErrorMessage ?? this.syncErrorMessage,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        deletedAt: deletedAt ?? this.deletedAt,
+        fromWallet: fromWallet ?? this.fromWallet,
+        toWallet: toWallet ?? this.toWallet,
+      );
 }

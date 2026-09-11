@@ -70,9 +70,9 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
             const SizedBox(height: 20),
             _buildBackupRestoreCard(context),
             const SizedBox(height: 20),
-            _buildAppInfoCard(),
-            const SizedBox(height: 32),
             _buildLogoutButton(context),
+            const SizedBox(height: 32),
+            _buildAppInfoCard(),
             const SizedBox(height: 32),
           ],
         ),
@@ -693,17 +693,6 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
           const Divider(height: 1, indent: 16, endIndent: 16),
           _buildMenuTile(
             context,
-            icon: Icons.category_rounded,
-            iconColor: AppTheme.secondary,
-            iconBgColor: AppTheme.secondary.withOpacity(0.1),
-            label: 'Manajemen Tipe Transaksi',
-            subtitle: 'Pemasukan, pengeluaran, dll.',
-            onTap: () =>
-                Navigator.pushNamed(context, AppRouter.transactionType),
-          ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          _buildMenuTile(
-            context,
             icon: Icons.folder_special_rounded,
             iconColor: AppTheme.primary,
             iconBgColor: AppTheme.primary.withOpacity(0.1),
@@ -711,6 +700,17 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
             subtitle: 'Makan, belanja, gaji, dll.',
             onTap: () =>
                 Navigator.pushNamed(context, AppRouter.transactionCategory),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          _buildMenuTile(
+            context,
+            icon: Icons.category_rounded,
+            iconColor: AppTheme.secondary,
+            iconBgColor: AppTheme.secondary.withOpacity(0.1),
+            label: 'Manajemen Tipe Transaksi',
+            subtitle: 'Pemasukan, pengeluaran, dll.',
+            onTap: () =>
+                Navigator.pushNamed(context, AppRouter.transactionType),
           ),
         ],
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../models/activity_item.dart';
+
 import '../core/constants/app_constants.dart';
 import '../core/utils/ulid_generator.dart';
 import '../core/utils/formatters.dart';
@@ -7,6 +9,7 @@ import '../database/database_helper.dart';
 import '../models/transaction.dart';
 import '../models/transaction_category.dart';
 import '../models/transaction_type.dart';
+import '../models/transfer.dart';
 import '../models/wallet.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
@@ -31,6 +34,21 @@ class TransactionProvider extends ChangeNotifier {
 
   List<TransactionModel> get recentTransactions =>
       transactions.take(5).toList();
+
+  /// Builds a unified sorted activity list from transactions + transfers.
+  /// [transfers] should be passed in from TransferProvider.
+  List<ActivityItem> buildActivityList({
+    required List<TransferModel> transfers,
+    int? limit,
+  }) {
+    final items = <ActivityItem>[
+      ...transactions.map(ActivityItem.fromTransaction),
+      ...transfers.map(ActivityItem.fromTransfer),
+    ];
+    items.sort((a, b) => b.date.compareTo(a.date));
+    if (limit != null) return items.take(limit).toList();
+    return items;
+  }
 
   void updateAuth(AuthProvider auth) {
     _isGuest = auth.isGuest;

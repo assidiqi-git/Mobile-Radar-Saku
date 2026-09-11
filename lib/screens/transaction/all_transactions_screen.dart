@@ -3,14 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 
-import '../../core/app_router.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
-import '../../models/transaction.dart';
+import '../../models/activity_item.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/transaction_category_provider.dart';
 import '../../providers/transaction_provider.dart';
+import '../../providers/transfer_provider.dart';
 import '../../providers/wallet_provider.dart';
+import '../components/activity_list_item.dart';
 
 class FilterItem {
   final String id;
@@ -42,6 +44,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   String? _selectedWalletId;
   String? _selectedCategoryId;
   DateTimeRange? _dateRange;
+  /// 'all' | 'transaction' | 'transfer'
+  String _selectedActivityType = 'all';
 
   @override
   void initState() {
@@ -87,10 +91,11 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
         child: Column(
           children: [
             _buildAppBar(),
+            _buildActivityTypeFilter(),
             _buildSearchBar(),
-            _buildFilterDropdowns(),
+            if (_selectedActivityType != 'transfer') _buildFilterDropdowns(),
             if (_dateRange != null) _buildDateRangeBadge(),
-            Expanded(child: _buildTransactionList()),
+            Expanded(child: _buildActivityList()),
           ],
         ),
       ),
@@ -116,7 +121,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   ),
                 ),
                 Text(
-                  'Semua Transaksi',
+                  'Semua Aktivitas',
                   style: GoogleFonts.outfit(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -396,53 +401,139 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
     );
   }
 
+  // ── Activity Type Filter ──────────────────────────────────────────────────
+
+  Widget _buildActivityTypeFilter() {
+    final types = [
+      ('all', 'Semua'),
+      ('transaction', 'Transaksi'),
+      ('transfer', 'Transfer'),
+    ];
+    return Container(
+      height: 38,
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: types.map((t) {
+          final isSelected = _selectedActivityType == t.$1;
+          return GestureDetector(
+            onTap: () => setState(() {
+              _selectedActivityType = t.$1;
+              // Reset category filter jika pindah ke Transfer
+              if (t.$1 == 'transfer') {
+                _selectedAction = null;
+                _selectedCategoryId = null;
+              }
+            }),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? AppTheme.primary : AppTheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected
+                      ? AppTheme.primary
+                      : AppTheme.outlineVariant.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Text(
+                t.$2,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Colors.white : AppTheme.onSurface,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   // ── Transaction List ───────────────────────────────────────────────────────
 
-  Widget _buildTransactionList() {
-    return Consumer<TransactionProvider>(
-      builder: (context, txProvider, _) {
-        final filtered = txProvider.filterTransactions(
-          searchText: _searchText.isEmpty ? null : _searchText,
-          walletId: _selectedWalletId,
-          categoryAction: _selectedAction,
-          categoryId: _selectedCategoryId,
-          startDate: _dateRange?.start,
-          endDate: _dateRange?.end,
-        );
+  Widget _buildActivityList() {
+    return Consumer2<TransactionProvider, TransferProvider>(
+      builder: (context, txProvider, transferProvider, _) {
+        final isGuest = context.read<AuthProvider>().isGuest;
 
-        if (txProvider.isLoading) {
+        final List<ActivityItem> items;
+        if (_selectedActivityType == 'transfer') {
+          // Only transfers
+          final filtered = transferProvider.filterTransfers(
+            searchText: _searchText.isEmpty ? null : _searchText,
+            walletId: _selectedWalletId,
+            startDate: _dateRange?.start,
+            endDate: _dateRange?.end,
+          );
+          items = filtered.map(ActivityItem.fromTransfer).toList();
+        } else if (_selectedActivityType == 'transaction') {
+          // Only transactions
+          final filtered = txProvider.filterTransactions(
+            searchText: _searchText.isEmpty ? null : _searchText,
+            walletId: _selectedWalletId,
+            categoryAction: _selectedAction,
+            categoryId: _selectedCategoryId,
+            startDate: _dateRange?.start,
+            endDate: _dateRange?.end,
+          );
+          items = filtered.map(ActivityItem.fromTransaction).toList();
+        } else {
+          // All — merge and sort
+          final filteredTx = txProvider.filterTransactions(
+            searchText: _searchText.isEmpty ? null : _searchText,
+            walletId: _selectedWalletId,
+            categoryAction: _selectedAction,
+            categoryId: _selectedCategoryId,
+            startDate: _dateRange?.start,
+            endDate: _dateRange?.end,
+          );
+          final filteredTf = transferProvider.filterTransfers(
+            searchText: _searchText.isEmpty ? null : _searchText,
+            walletId: _selectedWalletId,
+            startDate: _dateRange?.start,
+            endDate: _dateRange?.end,
+          );
+          items = [
+            ...filteredTx.map(ActivityItem.fromTransaction),
+            ...filteredTf.map(ActivityItem.fromTransfer),
+          ];
+          items.sort((a, b) => b.date.compareTo(a.date));
+        }
+
+        if (txProvider.isLoading || transferProvider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (filtered.isEmpty) {
+        if (items.isEmpty) {
           return _buildEmptyState();
         }
 
+        // Build date-grouped list
         final groupedItems = <dynamic>[];
         String? currentDateGroup;
-
-        for (final tx in filtered) {
-          final txDate = DateFormatter.fromApiString(tx.createdAt);
-          final dateGroup = DateFormatter.displayDateGroup(txDate);
-
+        for (final item in items) {
+          final dateGroup = DateFormatter.displayDateGroup(item.date);
           if (currentDateGroup != dateGroup) {
             groupedItems.add(dateGroup);
             currentDateGroup = dateGroup;
           }
-          groupedItems.add(tx);
+          groupedItems.add(item);
         }
 
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
           itemCount: groupedItems.length,
           itemBuilder: (_, i) {
-            final item = groupedItems[i];
-
-            if (item is String) {
+            final entry = groupedItems[i];
+            if (entry is String) {
               return Padding(
                 padding: const EdgeInsets.only(top: 16, bottom: 8),
                 child: Text(
-                  item.toUpperCase(),
+                  entry.toUpperCase(),
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -452,8 +543,11 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                 ),
               );
             }
-
-            return _TransactionItem(transaction: item as TransactionModel);
+            return ActivityListItem(
+              item: entry as ActivityItem,
+              isGuest: isGuest,
+              withHorizontalMargin: false,
+            );
           },
         );
       },
@@ -531,148 +625,5 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   }
 }
 
-// ── Transaction List Item ───────────────────────────────────────────────────
-
-class _TransactionItem extends StatelessWidget {
-  final TransactionModel transaction;
-
-  const _TransactionItem({required this.transaction});
-
-  @override
-  Widget build(BuildContext context) {
-    final action = transaction.transactionCategory?.transactionType?.action;
-    final isIncome = action == AppConstants.actionAddition;
-    final isExpense = action == AppConstants.actionDeduction;
-
-    final Color actionColor = isIncome
-        ? AppTheme.incomeColor
-        : isExpense
-        ? AppTheme.expenseColor
-        : AppTheme.onSurfaceVariant;
-
-    final IconData actionIcon = isIncome
-        ? Icons.arrow_downward_rounded
-        : isExpense
-        ? Icons.arrow_upward_rounded
-        : Icons.swap_horiz_rounded;
-
-    final String prefix = isIncome
-        ? '+'
-        : isExpense
-        ? '-'
-        : '~';
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            AppRouter.transactionDetail,
-            arguments: transaction.id,
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              // Icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: actionColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(actionIcon, color: actionColor, size: 20),
-              ),
-              const SizedBox(width: 12),
-              // Name + subtitle
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      transaction.name,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        if (transaction.transactionCategory != null) ...[
-                          Text(
-                            transaction.transactionCategory!.name,
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: AppTheme.outline,
-                            ),
-                          ),
-                          Text(
-                            ' · ${DateFormatter.relativeTime(DateTime.tryParse(transaction.createdAt ?? ''))}',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: AppTheme.outline,
-                            ),
-                          ),
-                        ] else ...[
-                          Text(
-                            DateFormatter.relativeTime(
-                              DateTime.tryParse(transaction.createdAt ?? ''),
-                            ),
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: AppTheme.outline,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Amount + date
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '$prefix${CurrencyFormatter.format(transaction.amount)}',
-                    style: AppTheme.monoStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: actionColor,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    DateFormatter.displayDate(
-                      DateTime.tryParse(transaction.createdAt ?? ''),
-                    ),
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      color: AppTheme.outline,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-
+// _TransactionItem has been replaced by ActivityListItem.
+// See: lib/screens/components/activity_list_item.dart

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/wallet.dart';
+import '../../providers/transfer_provider.dart';
 import '../../providers/wallet_provider.dart';
 
 class TransferScreen extends StatefulWidget {
@@ -88,6 +89,10 @@ class _TransferScreenState extends State<TransferScreen> {
             ? null
             : _noteController.text.trim(),
       );
+
+      // Refresh TransferProvider agar feed langsung terupdate
+      if (!mounted) return;
+      await context.read<TransferProvider>().refresh();
 
       // Form closes immediately — balance already updated in-memory
       if (!mounted) return;

@@ -14,6 +14,7 @@ import 'providers/sync_provider.dart';
 import 'providers/transaction_category_provider.dart';
 import 'providers/transaction_provider.dart';
 import 'providers/transaction_type_provider.dart';
+import 'providers/transfer_provider.dart';
 import 'providers/wallet_provider.dart';
 
 /// Global navigator key — digunakan oleh HomeWidget deep link listener
@@ -107,6 +108,10 @@ class _RadarSakuAppState extends State<RadarSakuApp> {
         ChangeNotifierProxyProvider<AuthProvider, SyncProvider>(
           create: (_) => SyncProvider(),
           update: (_, auth, sync) => sync!..updateAuth(auth),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, TransferProvider>(
+          create: (_) => TransferProvider(),
+          update: (_, auth, transfer) => transfer!..updateAuth(auth),
         ),
       ],
       child: MaterialApp(
