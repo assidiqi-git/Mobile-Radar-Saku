@@ -69,85 +69,97 @@ class _TransferItem extends StatelessWidget {
         DateTime.tryParse(transfer.transferDate) ??
         DateTime.tryParse(transfer.createdAt ?? '');
 
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: withHorizontalMargin ? 20 : 0,
-        vertical: 4,
-      ),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppTheme.onSurfaceVariant.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          AppRouter.transferDetail,
+          arguments: transfer.id,
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(
+          horizontal: withHorizontalMargin ? 20 : 0,
+          vertical: 4,
+        ),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppTheme.onSurfaceVariant.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.swap_horiz_rounded,
+                color: AppTheme.onSurfaceVariant,
+                size: 20,
+              ),
             ),
-            child: Icon(
-              Icons.swap_horiz_rounded,
-              color: AppTheme.onSurfaceVariant,
-              size: 20,
+            const SizedBox(width: 12),
+            // Name + subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    transfer.note?.isNotEmpty == true
+                        ? transfer.note!
+                        : 'Transfer',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$subtitle',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppTheme.outline,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          // Name + subtitle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(width: 8),
+            // Amount + date
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  transfer.note?.isNotEmpty == true
-                      ? transfer.note!
-                      : 'Transfer',
-                  style: GoogleFonts.inter(
+                  '~${CurrencyFormatter.format(transfer.amount)}',
+                  style: AppTheme.monoStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.onSurfaceVariant,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$subtitle',
+                  DateFormatter.relativeTime(date),
                   style: GoogleFonts.inter(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: AppTheme.outline,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          // Amount + date
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '~${CurrencyFormatter.format(transfer.amount)}',
-                style: AppTheme.monoStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                DateFormatter.relativeTime(date),
-                style: GoogleFonts.inter(fontSize: 10, color: AppTheme.outline),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

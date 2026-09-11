@@ -99,7 +99,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           children: [
             // Nominal Section
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 24,horizontal: 24),
+              padding: const EdgeInsets.symmetric(vertical: 20,horizontal: 20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -127,7 +127,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       size: 26,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(width: 14),
                   // Nominal dengan FittedBox — tidak pernah overflow
                   Expanded(
                     // padding: const EdgeInsets.symmetric(horizontal: 24),

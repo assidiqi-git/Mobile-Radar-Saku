@@ -16,6 +16,7 @@ import '../screens/summary/summary_screen.dart';
 import '../screens/transaction/add_transaction_screen.dart';
 import '../screens/transaction/all_transactions_screen.dart';
 import '../screens/transaction/transaction_detail_screen.dart';
+import '../screens/transfer/transfer_detail_screen.dart';
 import '../screens/transfer/transfer_screen.dart';
 import '../screens/wallet/wallets_screen.dart';
 
@@ -30,6 +31,7 @@ class AppRouter {
   static const String addTransaction = '/add-transaction';
   static const String allTransactions = '/all-transactions';
   static const String transactionDetail = '/transaction-detail';
+  static const String transferDetail = '/transfer-detail';
   static const String wallets = '/wallets';
   static const String transfer = '/transfer';
   static const String profile = '/profile';
@@ -59,6 +61,12 @@ class AppRouter {
         final id = settings.arguments as String;
         return _slideRoute(
           TransactionDetailScreen(transactionId: id),
+          settings,
+        );
+      case transferDetail:
+        final id = settings.arguments as String;
+        return _slideRoute(
+          TransferDetailScreen(transferId: id),
           settings,
         );
       case wallets:
