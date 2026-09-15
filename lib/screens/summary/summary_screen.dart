@@ -15,6 +15,8 @@ import 'widgets/top_transactions.dart';
 class SummaryScreen extends StatefulWidget {
   const SummaryScreen({super.key});
 
+  static final GlobalKey keySummaryOverview = GlobalKey(debugLabel: 'keySummaryOverview');
+
   @override
   State<SummaryScreen> createState() => _SummaryScreenState();
 }
@@ -215,26 +217,32 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 ),
               ),
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: PeriodFilter(
-                    selectedPeriod: _selectedPeriod,
-                    onPeriodChanged: (period) {
-                      setState(() {
-                        _selectedPeriod = period;
-                        _updateDateRange();
-                      });
-                    },
+                child: KeyedSubtree(
+                  key: SummaryScreen.keySummaryOverview,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: PeriodFilter(
+                          selectedPeriod: _selectedPeriod,
+                          onPeriodChanged: (period) {
+                            setState(() {
+                              _selectedPeriod = period;
+                              _updateDateRange();
+                            });
+                          },
+                        ),
+                      ),
+                      SummaryMetrics(
+                        totalIncome: totalIncome,
+                        totalExpense: totalExpense,
+                        changePercent: netCashChangePercent,
+                        incomeChangePercent: incomeChangePercent,
+                        expenseChangePercent: expenseChangePercent,
+                      ),
+                    ],
                   ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: SummaryMetrics(
-                  totalIncome: totalIncome,
-                  totalExpense: totalExpense,
-                  changePercent: netCashChangePercent,
-                  incomeChangePercent: incomeChangePercent,
-                  expenseChangePercent: expenseChangePercent,
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),

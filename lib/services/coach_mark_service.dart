@@ -9,6 +9,8 @@ import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
 import '../screens/profile/profile_sync_screen.dart';
 import '../screens/shell/main_shell.dart';
+import '../screens/summary/summary_screen.dart';
+import '../screens/transaction/all_transactions_screen.dart';
 
 /// Service yang mengelola seluruh logika Tutorial Coach Mark.
 ///
@@ -123,15 +125,15 @@ class CoachMarkService {
         );
         break;
       case 'nav_dashboard':
-        // Step 6 di-tap → step 7 (Summary) akan muncul → pindah ke Summary
+        // Step 5 di-tap → pindah ke Summary, lanjut ke nav_summary
         MainShellScreen.switchPage?.call(1);
         break;
-      case 'nav_summary':
-        // Step 7 di-tap → step 8 (Transaksi) → pindah ke Transaksi
+      case 'summary_overview':
+        // Step 7 di-tap → pindah ke Transaksi, lanjut ke nav_transaksi
         MainShellScreen.switchPage?.call(2);
         break;
-      case 'nav_transaksi':
-        // Step 8 di-tap → step 9 (Profil) → pindah ke Profil
+      case 'transaction_filters':
+        // Step 9 di-tap → pindah ke Profil
         MainShellScreen.switchPage?.call(3);
         break;
     }
@@ -296,7 +298,27 @@ class CoachMarkService {
         ],
       ),
 
-      // Step 7 — Tab Transaksi
+      // Step 7 — Summary Overview
+      TargetFocus(
+        identify: 'summary_overview',
+        keyTarget: SummaryScreen.keySummaryOverview,
+        shape: ShapeLightFocus.RRect,
+        radius: 12,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: _ContentWidget(
+              icon: '🗓️',
+              title: 'Filter & Ringkasan',
+              description:
+                  'Pilih periode waktu di atas dan lihat ringkasan pemasukan, pengeluaran, serta arus kas bersih Anda secara instan di sini.',
+            ),
+          ),
+        ],
+      ),
+
+      // Step 8 — Tab Transaksi
       TargetFocus(
         identify: 'nav_transaksi',
         keyTarget: keyNavTransaksi,
@@ -312,6 +334,26 @@ class CoachMarkService {
               description:
                   'Riwayat lengkap semua transaksi Anda dengan '
                   'filter dan pencarian.',
+            ),
+          ),
+        ],
+      ),
+
+      // Step 9 — Transaction Filters
+      TargetFocus(
+        identify: 'transaction_filters',
+        keyTarget: AllTransactionsScreen.keyTransactionFilters,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        enableOverlayTab: true,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: _ContentWidget(
+              icon: '🔍',
+              title: 'Cari & Filter Transaksi',
+              description:
+                  'Gunakan kotak pencarian dan filter ini untuk menemukan transaksi berdasarkan jenis, dompet, atau kategori dengan cepat.',
             ),
           ),
         ],

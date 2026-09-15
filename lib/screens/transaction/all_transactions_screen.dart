@@ -32,6 +32,8 @@ class FilterItem {
 class AllTransactionsScreen extends StatefulWidget {
   const AllTransactionsScreen({super.key});
 
+  static final GlobalKey keyTransactionFilters = GlobalKey(debugLabel: 'keyTransactionFilters');
+
   @override
   State<AllTransactionsScreen> createState() => _AllTransactionsScreenState();
 }
@@ -91,9 +93,18 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
         child: Column(
           children: [
             _buildAppBar(),
-            _buildActivityTypeFilter(),
-            _buildSearchBar(),
-            if (_selectedActivityType != 'transfer') _buildFilterDropdowns(),
+            Container(
+              key: AllTransactionsScreen.keyTransactionFilters,
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildActivityTypeFilter(),
+                  _buildSearchBar(),
+                  if (_selectedActivityType != 'transfer') _buildFilterDropdowns(),
+                ],
+              ),
+            ),
             if (_dateRange != null) _buildDateRangeBadge(),
             Expanded(child: _buildActivityList()),
           ],
