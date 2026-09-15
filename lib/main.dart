@@ -38,7 +38,7 @@ Future<void> main() async {
   // ── DEV ONLY ─────────────────────────────────────────────────────────────
   // Uncomment baris berikut untuk melihat coach mark lagi, lalu comment kembali
   // setelah selesai testing:
-  if (kDebugMode) await CoachMarkService.resetForDebug();
+  // if (kDebugMode) await CoachMarkService.resetForDebug();
   // ─────────────────────────────────────────────────────────────────────────
 
   runApp(const RadarSakuApp());
