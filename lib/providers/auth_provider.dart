@@ -7,6 +7,7 @@ import '../core/constants/app_constants.dart';
 import '../database/database_helper.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
+import '../services/default_data_service.dart';
 import '../services/widget_service.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
@@ -39,6 +40,7 @@ class AuthProvider extends ChangeNotifier {
     if (isGuest) {
       _isGuest = true;
       _status = AuthStatus.authenticated;
+      await DefaultDataService.initDefaultData();
       notifyListeners();
       return;
     }
@@ -52,6 +54,7 @@ class AuthProvider extends ChangeNotifier {
             jsonDecode(userJson) as Map<String, dynamic>);
         ApiService.instance.setToken(_token);
         _status = AuthStatus.authenticated;
+        await DefaultDataService.initDefaultData();
       } catch (_) {
         await _clearSession();
       }
@@ -72,6 +75,7 @@ class AuthProvider extends ChangeNotifier {
       _isGuest = false;
       await _persistSession();
       _status = AuthStatus.authenticated;
+      await DefaultDataService.initDefaultData();
       notifyListeners();
       return true;
     } on ValidationException catch (e) {
@@ -105,6 +109,7 @@ class AuthProvider extends ChangeNotifier {
       _user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
       await _persistSession();
       _status = AuthStatus.authenticated;
+      await DefaultDataService.initDefaultData();
       notifyListeners();
       return true;
     } on ValidationException catch (e) {
@@ -143,6 +148,7 @@ class AuthProvider extends ChangeNotifier {
     _token = null;
     _user = null;
     _status = AuthStatus.authenticated;
+    await DefaultDataService.initDefaultData();
     notifyListeners();
   }
 
