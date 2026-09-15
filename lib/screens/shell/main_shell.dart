@@ -10,6 +10,18 @@ import '../profile/profile_sync_screen.dart';
 class MainShellScreen extends StatefulWidget {
   const MainShellScreen({super.key});
 
+  // GlobalKey yang diakses oleh DashboardScreen untuk coach mark.
+  // Dideklarasikan di sini (public class) agar bisa diakses dari file lain.
+  static final GlobalKey keyFab          = GlobalKey(debugLabel: 'keyFab');
+  static final GlobalKey keyNavDashboard = GlobalKey(debugLabel: 'keyNavDashboard');
+  static final GlobalKey keyNavSummary   = GlobalKey(debugLabel: 'keyNavSummary');
+  static final GlobalKey keyNavTransaksi = GlobalKey(debugLabel: 'keyNavTransaksi');
+  static final GlobalKey keyNavProfil    = GlobalKey(debugLabel: 'keyNavProfil');
+
+  /// Callback untuk berpindah halaman dari luar widget tree (e.g. coach mark).
+  /// Di-set oleh [_MainShellScreenState] saat widget di-mount.
+  static void Function(int pageIndex)? switchPage;
+
   @override
   State<MainShellScreen> createState() => _MainShellScreenState();
 }
@@ -32,7 +44,15 @@ class _MainShellScreenState extends State<MainShellScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Daftarkan callback switchPage agar bisa dipanggil oleh CoachMarkService
+    MainShellScreen.switchPage = _onTabTap;
+  }
+
+  @override
   void dispose() {
+    MainShellScreen.switchPage = null;
     _pageController.dispose();
     super.dispose();
   }
@@ -96,30 +116,31 @@ class _MainShellScreenState extends State<MainShellScreen> {
             final pageIndex = index > 2 ? index - 1 : index;
             _onTabTap(pageIndex);
           },
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_rounded),
+              icon: Icon(Icons.dashboard_rounded, key: MainShellScreen.keyNavDashboard),
               label: 'Beranda',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_rounded),
+              icon: Icon(Icons.bar_chart_rounded, key: MainShellScreen.keyNavSummary),
               label: 'Summary',
             ),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(null), // FAB gap
               label: '',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_rounded),
+              icon: Icon(Icons.receipt_long_rounded, key: MainShellScreen.keyNavTransaksi),
               label: 'Transaksi',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline_rounded),
+              icon: Icon(Icons.person_outline_rounded, key: MainShellScreen.keyNavProfil),
               label: 'Profil',
             ),
           ],
         ),
         floatingActionButton: FloatingActionButton(
+          key: MainShellScreen.keyFab,
           onPressed: () =>
               Navigator.pushNamed(context, AppRouter.addTransaction),
           child: const Icon(Icons.receipt_long_rounded),

@@ -5,6 +5,7 @@ class AppConstants {
   static const String lastSyncedAtKey   = 'last_synced_at';
   static const String isGuestKey        = 'is_guest';
   static const String customServerUrlKey = 'custom_server_url';
+  static const String hasSeenTutorialKey = 'has_seen_tutorial';
 
   // SQLite table names
   static const String tableUsers = 'users';

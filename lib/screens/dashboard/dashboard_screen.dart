@@ -13,10 +13,12 @@ import '../../providers/transaction_category_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/transfer_provider.dart';
 import '../../providers/wallet_provider.dart';
+import '../../services/coach_mark_service.dart';
 import '../components/activity_list_item.dart';
 import '../settings/transaction_category_list_screen.dart';
 import '../../providers/transaction_type_provider.dart';
 import '../settings/transaction_type_list_screen.dart';
+import '../shell/main_shell.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -29,11 +31,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final PageController _balancePageController = PageController();
   int _balanceCardIndex = 0;
 
+  // GlobalKey untuk elemen-elemen yang di-highlight coach mark
+  final GlobalKey _keyBalanceCard       = GlobalKey(debugLabel: 'keyBalanceCard');
+  final GlobalKey _keyWalletsSection    = GlobalKey(debugLabel: 'keyWalletsSection');
+  final GlobalKey _keyRecentActivity    = GlobalKey(debugLabel: 'keyRecentActivity');
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadData();
+      _maybeShowCoachMark();
     });
   }
 
@@ -41,6 +49,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _balancePageController.dispose();
     super.dispose();
+  }
+
+  /// Tampilkan coach mark jika user belum pernah melihatnya.
+  Future<void> _maybeShowCoachMark() async {
+    if (!mounted) return;
+    final shouldShow = await CoachMarkService.shouldShowTutorial();
+    if (!shouldShow || !mounted) return;
+
+    await CoachMarkService.markTutorialSeen();
+    if (!mounted) return;
+
+    // ignore: use_build_context_synchronously
+    CoachMarkService.show(
+      context: context,
+      keyBalanceCard:      _keyBalanceCard,
+      keyWalletsSection:   _keyWalletsSection,
+      keyRecentActivity:   _keyRecentActivity,
+      keyFab:              MainShellScreen.keyFab,
+      keyNavDashboard:     MainShellScreen.keyNavDashboard,
+      keyNavSummary:       MainShellScreen.keyNavSummary,
+      keyNavTransaksi:     MainShellScreen.keyNavTransaksi,
+      keyNavProfil:        MainShellScreen.keyNavProfil,
+      balancePageController: _balancePageController,
+    );
   }
 
   Future<void> _loadData() async {
@@ -97,16 +129,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               // Empty Category Banner
               SliverToBoxAdapter(child: _buildEmptyCategoryBanner()),
               // Wallets Horizontal Scroll
-              SliverToBoxAdapter(child: _buildWalletsSection()),
+              SliverToBoxAdapter(
+                child: KeyedSubtree(
+                  key: _keyWalletsSection,
+                  child: _buildWalletsSection(),
+                ),
+              ),
               // Pending Sync Banner
               SliverToBoxAdapter(child: _buildSyncBanner()),
               // Recent Transactions Header
               SliverToBoxAdapter(
-                child: _buildSectionHeader(
-                  'Aktivitas Terbaru',
-                  actionLabel: 'Lihat Semua',
-                  onTap: () =>
-                      Navigator.pushNamed(context, AppRouter.allTransactions),
+                child: KeyedSubtree(
+                  key: _keyRecentActivity,
+                  child: _buildSectionHeader(
+                    'Aktivitas Terbaru',
+                    actionLabel: 'Lihat Semua',
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRouter.allTransactions),
+                  ),
                 ),
               ),
               // Transaction List
@@ -171,6 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return Column(
           children: [
             SizedBox(
+              key: _keyBalanceCard,
               height: 165,
               child: PageView(
                 controller: _balancePageController,

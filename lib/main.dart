@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:home_widget/home_widget.dart';
@@ -16,6 +17,7 @@ import 'providers/transaction_provider.dart';
 import 'providers/transaction_type_provider.dart';
 import 'providers/transfer_provider.dart';
 import 'providers/wallet_provider.dart';
+import 'services/coach_mark_service.dart';
 
 /// Global navigator key — digunakan oleh HomeWidget deep link listener
 /// untuk navigate dari luar widget tree.
@@ -32,6 +34,12 @@ Future<void> main() async {
 
   // Initialize locale data for Indonesian date formatting
   await initializeDateFormatting('id_ID', null);
+
+  // ── DEV ONLY ─────────────────────────────────────────────────────────────
+  // Uncomment baris berikut untuk melihat coach mark lagi, lalu comment kembali
+  // setelah selesai testing:
+  if (kDebugMode) await CoachMarkService.resetForDebug();
+  // ─────────────────────────────────────────────────────────────────────────
 
   runApp(const RadarSakuApp());
 }

@@ -158,6 +158,7 @@ class AuthProvider extends ChangeNotifier {
     await prefs.remove(AppConstants.authTokenKey);
     await prefs.remove(AppConstants.userDataKey);
     await prefs.remove(AppConstants.isGuestKey);
+    await prefs.remove(AppConstants.hasSeenTutorialKey); // reset tutorial agar user baru melihat lagi
     ApiService.instance.setToken(null);
     _token = null;
     _user = null;

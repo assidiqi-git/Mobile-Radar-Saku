@@ -18,6 +18,10 @@ import '../../services/backup_restore_service.dart';
 class ProfileSyncScreen extends StatefulWidget {
   const ProfileSyncScreen({super.key});
 
+  static final GlobalKey keyMenuDompet = GlobalKey(debugLabel: 'keyMenuDompet');
+  static final GlobalKey keyMenuKategori = GlobalKey(debugLabel: 'keyMenuKategori');
+  static final GlobalKey keyMenuTipe = GlobalKey(debugLabel: 'keyMenuTipe');
+
   @override
   State<ProfileSyncScreen> createState() => _ProfileSyncScreenState();
 }
@@ -681,36 +685,45 @@ class _ProfileSyncScreenState extends State<ProfileSyncScreen> {
               ),
             ),
           ),
-          _buildMenuTile(
-            context,
-            icon: Icons.account_balance_wallet_rounded,
-            iconColor: AppTheme.incomeColor,
-            iconBgColor: AppTheme.incomeColor.withValues(alpha: 0.1),
-            label: 'Manajemen Dompet',
-            subtitle: 'Rekening bank, tunai, e-wallet, dll.',
-            onTap: () => Navigator.pushNamed(context, AppRouter.wallets),
+          KeyedSubtree(
+            key: ProfileSyncScreen.keyMenuDompet,
+            child: _buildMenuTile(
+              context,
+              icon: Icons.account_balance_wallet_rounded,
+              iconColor: AppTheme.incomeColor,
+              iconBgColor: AppTheme.incomeColor.withValues(alpha: 0.1),
+              label: 'Manajemen Dompet',
+              subtitle: 'Rekening bank, tunai, e-wallet, dll.',
+              onTap: () => Navigator.pushNamed(context, AppRouter.wallets),
+            ),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          _buildMenuTile(
-            context,
-            icon: Icons.folder_special_rounded,
-            iconColor: AppTheme.primary,
-            iconBgColor: AppTheme.primary.withOpacity(0.1),
-            label: 'Manajemen Kategori Transaksi',
-            subtitle: 'Makan, belanja, gaji, dll.',
-            onTap: () =>
-                Navigator.pushNamed(context, AppRouter.transactionCategory),
+          KeyedSubtree(
+            key: ProfileSyncScreen.keyMenuKategori,
+            child: _buildMenuTile(
+              context,
+              icon: Icons.folder_special_rounded,
+              iconColor: AppTheme.primary,
+              iconBgColor: AppTheme.primary.withOpacity(0.1),
+              label: 'Manajemen Kategori Transaksi',
+              subtitle: 'Makan, belanja, gaji, dll.',
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRouter.transactionCategory),
+            ),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          _buildMenuTile(
-            context,
-            icon: Icons.category_rounded,
-            iconColor: AppTheme.secondary,
-            iconBgColor: AppTheme.secondary.withOpacity(0.1),
-            label: 'Manajemen Tipe Transaksi',
-            subtitle: 'Pemasukan, pengeluaran, dll.',
-            onTap: () =>
-                Navigator.pushNamed(context, AppRouter.transactionType),
+          KeyedSubtree(
+            key: ProfileSyncScreen.keyMenuTipe,
+            child: _buildMenuTile(
+              context,
+              icon: Icons.category_rounded,
+              iconColor: AppTheme.secondary,
+              iconBgColor: AppTheme.secondary.withOpacity(0.1),
+              label: 'Manajemen Tipe Transaksi',
+              subtitle: 'Pemasukan, pengeluaran, dll.',
+              onTap: () =>
+                  Navigator.pushNamed(context, AppRouter.transactionType),
+            ),
           ),
         ],
       ),
